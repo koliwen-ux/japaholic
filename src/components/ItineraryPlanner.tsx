@@ -1,0 +1,267 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Reorder } from "framer-motion";
+import { GripVertical, MapPin, Plus, Presentation, Trash2 } from "lucide-react";
+import { mockItineraries, mockLocations } from "@/data/mockData";
+import { useItinerary } from "@/lib/itinerary-store";
+import { useContentStore } from "@/lib/content-store";
+import { iconMap } from "@/lib/icons";
+import { buildTripPptx } from "@/lib/export-pptx";
+import type { ItineraryStop } from "@/types";
+import { BudgetPlanner } from "@/components/BudgetPlanner";
+
+const tripTitle = mockItineraries[0]?.title ?? "東北取材行程規劃";
+
+function AddStopForm({ day, onDone }: { day: number; onDone: () => void }) {
+  const { addStop } = useItinerary();
+  const [locationId, setLocationId] = useState(mockLocations[0]?.id ?? "");
+  const [spotName, setSpotName] = useState("");
+  const [transport, setTransport] = useState("");
+  const [contentFocus, setContentFocus] = useState("");
+  const [note, setNote] = useState("");
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!spotName.trim() || !locationId) return;
+    addStop({
+      day,
+      spotName: spotName.trim(),
+      note: note.trim(),
+      locationId,
+      transport: transport.trim() || undefined,
+      contentFocus: contentFocus.trim() || undefined,
+    });
+    onDone();
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-2 rounded-xl border border-dashed border-ink/20 bg-white/60 p-3 md:gap-3 md:p-4"
+    >
+      <div className="flex gap-2 md:gap-3">
+        <select
+          value={locationId}
+          onChange={(event) => setLocationId(event.target.value)}
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        >
+          {mockLocations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {location.name}
+            </option>
+          ))}
+        </select>
+        <input
+          value={spotName}
+          onChange={(event) => setSpotName(event.target.value)}
+          placeholder="景點名稱"
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        />
+      </div>
+      <div className="flex gap-2 md:gap-3">
+        <input
+          value={transport}
+          onChange={(event) => setTransport(event.target.value)}
+          placeholder="交通方式（選填）"
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        />
+        <input
+          value={contentFocus}
+          onChange={(event) => setContentFocus(event.target.value)}
+          placeholder="內容重點（選填）"
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        />
+      </div>
+      <textarea
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+        placeholder="自訂筆記（選填）"
+        rows={2}
+        className="resize-none rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+      />
+      <div className="flex justify-end gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={onDone}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink/60 hover:bg-ink/5 md:px-4 md:py-2 md:text-sm"
+        >
+          取消
+        </button>
+        <button
+          type="submit"
+          className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-ink hover:bg-mint/80 md:px-4 md:py-2 md:text-sm"
+        >
+          新增景點
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function StopCard({ stop, days }: { stop: ItineraryStop; days: number[] }) {
+  const { updateStop, removeStop } = useItinerary();
+  const location = mockLocations.find((item) => item.id === stop.locationId);
+  const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
+
+  return (
+    <Reorder.Item
+      value={stop.id}
+      className="flex items-start gap-3 rounded-xl bg-white/80 p-3 shadow-sm md:gap-4 md:p-4"
+    >
+      <span className="mt-1.5 shrink-0 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
+        <GripVertical size={16} className="md:h-5 md:w-5" />
+      </span>
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">
+        <Icon size={14} className="md:h-[18px] md:w-[18px]" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <input
+          value={stop.spotName}
+          onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
+          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
+        />
+        <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
+        <div className="flex gap-1.5">
+          <input
+            value={stop.transport ?? ""}
+            onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
+            placeholder="交通方式..."
+            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          />
+          <input
+            value={stop.contentFocus ?? ""}
+            onChange={(event) => updateStop(stop.id, { contentFocus: event.target.value })}
+            placeholder="內容重點..."
+            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          />
+        </div>
+        <textarea
+          value={stop.note}
+          onChange={(event) => updateStop(stop.id, { note: event.target.value })}
+          placeholder="自訂筆記..."
+          rows={1}
+          className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+        />
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1.5 print:hidden">
+        <select
+          value={stop.day}
+          onChange={(event) => updateStop(stop.id, { day: Number(event.target.value) })}
+          className="rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
+        >
+          {days.map((d) => (
+            <option key={d} value={d}>
+              Day {d}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => removeStop(stop.id)}
+          aria-label="刪除景點"
+          className="rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+        >
+          <Trash2 size={14} className="md:h-4 md:w-4" />
+        </button>
+      </div>
+    </Reorder.Item>
+  );
+}
+
+function DaySection({ day }: { day: number }) {
+  const { stops, days, reorderDay } = useItinerary();
+  const [isAdding, setIsAdding] = useState(false);
+  const dayStops = useMemo(() => stops.filter((stop) => stop.day === day), [stops, day]);
+  const dayStopIds = useMemo(() => dayStops.map((stop) => stop.id), [dayStops]);
+
+  return (
+    <section className="rounded-2xl bg-white/50 p-4 shadow-sm md:p-5">
+      <div className="mb-3 flex items-center justify-between md:mb-4">
+        <h3 className="text-base font-bold text-ink md:text-lg">Day {day}</h3>
+        <button
+          type="button"
+          onClick={() => setIsAdding((v) => !v)}
+          className="flex items-center gap-1 rounded-full bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/10 print:hidden md:px-3 md:py-1.5 md:text-sm"
+        >
+          <Plus size={12} className="md:h-3.5 md:w-3.5" /> 新增景點
+        </button>
+      </div>
+
+      {isAdding && (
+        <div className="mb-3">
+          <AddStopForm day={day} onDone={() => setIsAdding(false)} />
+        </div>
+      )}
+
+      {dayStops.length === 0 ? (
+        <p className="text-sm text-ink/40 md:text-base">尚無景點，從地圖點選縣市加入，或點擊「新增景點」。</p>
+      ) : (
+        <Reorder.Group
+          axis="y"
+          values={dayStopIds}
+          onReorder={(newOrder) => reorderDay(day, newOrder as string[])}
+          className="flex flex-col gap-2 md:gap-3"
+        >
+          {dayStops.map((stop) => (
+            <StopCard key={stop.id} stop={stop} days={days} />
+          ))}
+        </Reorder.Group>
+      )}
+    </section>
+  );
+}
+
+export function ItineraryPlanner() {
+  const { days, stops, addDay, budgetItems, budgetTotal } = useItinerary();
+  const { proposals } = useContentStore();
+  const [isExportingPptx, setIsExportingPptx] = useState(false);
+
+  const handleExportPptx = async () => {
+    setIsExportingPptx(true);
+    try {
+      await buildTripPptx({
+        tripTitle,
+        days,
+        stops,
+        budgetItems,
+        budgetTotal,
+        proposals,
+      });
+    } finally {
+      setIsExportingPptx(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-3xl rounded-[2.5rem] bg-white/50 p-4 shadow-xl print:bg-white print:p-0 print:shadow-none sm:p-8 md:max-w-4xl md:p-10 lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem]">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
+        <h2 className="text-xl font-bold text-ink md:text-2xl">行程規劃器</h2>
+        <div className="flex flex-wrap gap-2 print:hidden md:gap-3">
+          <button
+            type="button"
+            onClick={addDay}
+            className="flex items-center gap-1.5 rounded-full bg-mint px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-mint/80 md:px-4 md:py-2 md:text-sm"
+          >
+            <Plus size={14} className="md:h-4 md:w-4" /> 新增天數
+          </button>
+          <button
+            type="button"
+            onClick={handleExportPptx}
+            disabled={isExportingPptx}
+            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/70 shadow-sm transition-colors hover:bg-ink/5 disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
+          >
+            <Presentation size={14} className="md:h-4 md:w-4" /> {isExportingPptx ? "產生中…" : "下載 PPT"}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 md:gap-5">
+        {days.map((day) => (
+          <DaySection key={day} day={day} />
+        ))}
+        <BudgetPlanner />
+      </div>
+    </div>
+  );
+}

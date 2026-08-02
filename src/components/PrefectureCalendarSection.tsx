@@ -15,7 +15,7 @@ import {
 } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { Camera, Check, ChevronLeft, ChevronRight, Circle, Plus, Trash2 } from "lucide-react";
-import type { ContentType, Prefecture, Project } from "@/types";
+import type { ContentType, ItineraryStop, Prefecture, Project } from "@/types";
 import { useContentStore } from "@/lib/content-store";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +75,15 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
   );
 }
 
-export function PrefectureCalendarSection({ prefecture, project }: { prefecture: Prefecture; project: Project }) {
+export function PrefectureCalendarSection({
+  prefecture,
+  project,
+  itineraryStops,
+}: {
+  prefecture: Prefecture;
+  project: Project;
+  itineraryStops: ItineraryStop[];
+}) {
   const [month, setMonth] = useState(() => new Date());
   const [isAddingTask, setIsAddingTask] = useState(false);
   const {
@@ -115,8 +123,9 @@ export function PrefectureCalendarSection({ prefecture, project }: { prefecture:
   }, [contentItems]);
 
   const coverageDates = useMemo(
-    () => new Set(coveragePlans.map((plan) => plan.date)),
-    [coveragePlans]
+    () =>
+      new Set([...coveragePlans.map((plan) => plan.date), ...itineraryStops.map((stop) => stop.date)]),
+    [coveragePlans, itineraryStops]
   );
 
   const monthStart = startOfMonth(month);
@@ -190,7 +199,7 @@ export function PrefectureCalendarSection({ prefecture, project }: { prefecture:
           return (
             <div
               key={day.toISOString()}
-              title={hasCoverage ? "此日有取材安排" : undefined}
+              title={hasCoverage ? "此日有行程或取材安排" : undefined}
               className={cn(
                 "flex min-h-[58px] flex-col items-center gap-1 rounded-lg p-1 sm:min-h-[68px] sm:p-1.5",
                 isSameMonth(day, month) ? "bg-white/70" : "bg-white/25"

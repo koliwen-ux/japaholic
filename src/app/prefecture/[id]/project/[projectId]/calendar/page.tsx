@@ -16,7 +16,7 @@ export default async function ProjectCalendarPage({
     notFound();
   }
 
-  const { project } = await loadProjectItinerary(projectId);
+  const { project, stops } = await loadProjectItinerary(projectId);
   if (!project || project.prefectureId !== prefecture.id) {
     notFound();
   }
@@ -24,7 +24,7 @@ export default async function ProjectCalendarPage({
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10 text-ink md:py-14">
       <ProjectSectionShell prefecture={prefecture} project={project} icon={CalendarCheck2} title="進度月曆">
-        <PrefectureCalendarSection prefecture={prefecture} project={project} />
+        <PrefectureCalendarSection prefecture={prefecture} project={project} itineraryStops={stops} />
       </ProjectSectionShell>
     </div>
   );

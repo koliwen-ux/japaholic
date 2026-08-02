@@ -21,7 +21,6 @@ import type { ContentItem, ContentStatus, ContentType, CoveragePlan } from "@/ty
 import { cn } from "@/lib/utils";
 import { resolvePrefectureId } from "@/lib/location";
 import { useContentStore } from "@/lib/content-store";
-import { WheelPicker, type WheelPickerOption } from "@/components/WheelPicker";
 
 const typeBadgeStyle: Record<ContentType, string> = {
   article: "bg-azure text-ink",
@@ -51,10 +50,8 @@ const statusBadgeModifier: Record<ContentStatus, string> = {
   discarded: "opacity-40 border border-dashed border-ink/20",
 };
 
-const prefectureOptions: WheelPickerOption[] = [
-  { value: "all", label: "全部" },
-  ...mockPrefectures.map((prefecture) => ({ value: prefecture.id, label: prefecture.name })),
-];
+// "已捨棄" is intentionally excluded — discarded content isn't useful to filter by here.
+const filterableStatuses: ContentStatus[] = ["candidate", "draft", "scheduled", "published"];
 
 type DayEvent =
   | { kind: "content"; id: string; item: ContentItem }
@@ -162,39 +159,48 @@ export function ContentCalendar() {
         </span>
       </div>
 
-      <div className="mb-4 flex flex-col items-center gap-4 md:mb-6 md:flex-row md:items-start md:justify-center md:gap-10">
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-medium text-ink/50 md:text-sm">縣市</span>
-          <WheelPicker options={prefectureOptions} value={prefectureFilter} onChange={setPrefectureFilter} />
+      <div className="mb-4 flex flex-col gap-3 md:mb-6 md:gap-4">
+        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+          <span className="mr-1 self-center text-xs font-medium text-ink/50 md:text-sm">縣市</span>
+          <select
+            value={prefectureFilter}
+            onChange={(event) => setPrefectureFilter(event.target.value)}
+            className="rounded-full border border-ink/10 bg-white/70 px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-white md:px-4 md:py-2 md:text-sm"
+          >
+            <option value="all">全部</option>
+            {mockPrefectures.map((prefecture) => (
+              <option key={prefecture.id} value={prefecture.id}>
+                {prefecture.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 md:items-start md:pt-6">
-          <span className="text-xs font-medium text-ink/50 md:text-sm">狀態（僅篩選內容上線）</span>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+          <span className="mr-1 self-center text-xs font-medium text-ink/50 md:text-sm">狀態（僅篩選內容上線）</span>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
+              statusFilter === "all" ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
+            )}
+          >
+            全部
+          </button>
+          {filterableStatuses.map((status) => (
             <button
+              key={status}
               type="button"
-              onClick={() => setStatusFilter("all")}
+              onClick={() => setStatusFilter(status)}
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-                statusFilter === "all" ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
+                statusFilter === status ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
               )}
             >
-              全部
+              {statusLabel[status]}
             </button>
-            {(Object.keys(statusLabel) as ContentStatus[]).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-                  statusFilter === status ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
-                )}
-              >
-                {statusLabel[status]}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 

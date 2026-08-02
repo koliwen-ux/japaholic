@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
+import { ClipboardList } from "lucide-react";
 import { mockPrefectures } from "@/data/mockData";
 import { loadProjectItinerary } from "@/lib/data/load-project-itinerary";
-import { ProjectDetail } from "@/components/ProjectDetail";
+import { ProjectSectionShell } from "@/components/ProjectSectionShell";
+import { PrefectureContentSection } from "@/components/PrefectureContentSection";
 
-export default async function ProjectPage({
+export default async function ProjectContentPage({
   params,
 }: {
   params: Promise<{ id: string; projectId: string }>;
@@ -21,7 +23,9 @@ export default async function ProjectPage({
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10 text-ink md:py-14">
-      <ProjectDetail prefecture={prefecture} project={project} />
+      <ProjectSectionShell prefecture={prefecture} project={project} icon={ClipboardList} title="內容規劃">
+        <PrefectureContentSection prefecture={prefecture} project={project} />
+      </ProjectSectionShell>
     </div>
   );
 }

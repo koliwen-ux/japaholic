@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
+import { Compass } from "lucide-react";
 import { mockPrefectures } from "@/data/mockData";
 import { loadProjectItinerary } from "@/lib/data/load-project-itinerary";
-import { ProjectDetail } from "@/components/ProjectDetail";
+import { ProjectSectionShell } from "@/components/ProjectSectionShell";
+import { PrefectureCoverageAccordion } from "@/components/PrefectureCoverageAccordion";
 
-export default async function ProjectPage({
+export default async function ProjectCoveragePage({
   params,
 }: {
   params: Promise<{ id: string; projectId: string }>;
@@ -21,7 +23,9 @@ export default async function ProjectPage({
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10 text-ink md:py-14">
-      <ProjectDetail prefecture={prefecture} project={project} />
+      <ProjectSectionShell prefecture={prefecture} project={project} icon={Compass} title="取材安排">
+        <PrefectureCoverageAccordion prefecture={prefecture} project={project} />
+      </ProjectSectionShell>
     </div>
   );
 }

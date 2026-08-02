@@ -10,8 +10,7 @@ export function BudgetPlanner() {
 
   return (
     <section className="rounded-2xl bg-white/50 p-4 shadow-sm md:p-5">
-      <div className="mb-3 flex items-center justify-between md:mb-4">
-        <h3 className="text-base font-bold text-ink md:text-lg">預算規劃</h3>
+      <div className="mb-3 flex items-center justify-end md:mb-4">
         <button
           type="button"
           onClick={() => addBudgetItem({ category: "新項目", amount: 0, note: "" })}

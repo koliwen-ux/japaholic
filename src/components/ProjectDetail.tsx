@@ -1,29 +1,30 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarCheck2, ClipboardList, Compass, MapPinned } from "lucide-react";
-import type { BudgetItem, ItineraryStop, Prefecture, Project } from "@/types";
+import {
+  ArrowLeft,
+  CalendarCheck2,
+  ClipboardList,
+  Compass,
+  MapPinned,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import type { Prefecture, Project } from "@/types";
 import { iconMap } from "@/lib/icons";
-import { SectionHeading } from "@/components/SectionHeading";
-import { PrefectureContentSection } from "@/components/PrefectureContentSection";
-import { PrefectureCalendarSection } from "@/components/PrefectureCalendarSection";
-import { PrefectureCoverageAccordion } from "@/components/PrefectureCoverageAccordion";
-import { ItineraryProvider } from "@/lib/itinerary-store";
-import { ItineraryPlanner } from "@/components/ItineraryPlanner";
 
-export function ProjectDetail({
-  prefecture,
-  project,
-  initialStops,
-  initialBudgetItems,
-}: {
-  prefecture: Prefecture;
-  project: Project;
-  initialStops: ItineraryStop[];
-  initialBudgetItems: BudgetItem[];
-}) {
+const sections: { slug: string; icon: LucideIcon; title: string; description: string }[] = [
+  { slug: "content", icon: ClipboardList, title: "內容規劃", description: "文章、YouTube、SNS 企劃與發布排程" },
+  { slug: "calendar", icon: CalendarCheck2, title: "進度月曆", description: "追蹤任務與發布／取材日期總覽" },
+  { slug: "coverage", icon: Compass, title: "取材安排", description: "景點、時間、地址與拍攝檢查清單" },
+  { slug: "itinerary", icon: MapPinned, title: "行程規劃", description: "每日行程、交通與時間安排" },
+  { slug: "budget", icon: Wallet, title: "預算規劃", description: "費用項目與總預算試算" },
+];
+
+export function ProjectDetail({ prefecture, project }: { prefecture: Prefecture; project: Project }) {
   const Icon = iconMap[prefecture.icon] ?? Compass;
+  const basePath = `/prefecture/${prefecture.id.replace("pref-", "")}/project/${project.id}`;
 
   return (
-    <div className="w-full max-w-3xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem]">
+    <div className="w-full max-w-3xl md:max-w-4xl">
       <Link
         href={`/prefecture/${prefecture.id.replace("pref-", "")}`}
         className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/60 shadow-sm transition-colors hover:bg-ink/5 hover:text-ink md:px-4 md:py-2 md:text-sm"
@@ -51,28 +52,28 @@ export function ProjectDetail({
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-8 md:mt-10 md:gap-10">
-        <section>
-          <SectionHeading icon={ClipboardList} title="內容規劃" color={prefecture.color} />
-          <PrefectureContentSection prefecture={prefecture} project={project} />
-        </section>
-
-        <section>
-          <SectionHeading icon={CalendarCheck2} title="進度月曆" color={prefecture.color} />
-          <PrefectureCalendarSection prefecture={prefecture} project={project} />
-        </section>
-
-        <section>
-          <SectionHeading icon={Compass} title="取材安排" color={prefecture.color} />
-          <PrefectureCoverageAccordion prefecture={prefecture} project={project} />
-        </section>
-
-        <section>
-          <SectionHeading icon={MapPinned} title="行程規劃" color={prefecture.color} />
-          <ItineraryProvider projectId={project.id} initialStops={initialStops} initialBudgetItems={initialBudgetItems}>
-            <ItineraryPlanner title={project.name} projectId={project.id} />
-          </ItineraryProvider>
-        </section>
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mt-10 md:gap-4">
+        {sections.map((section) => {
+          const SectionIcon = section.icon;
+          return (
+            <Link
+              key={section.slug}
+              href={`${basePath}/${section.slug}`}
+              className="flex items-start gap-3 rounded-2xl bg-white/70 p-4 shadow-sm transition-colors hover:bg-white md:gap-4 md:p-5"
+            >
+              <span
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink md:h-12 md:w-12"
+                style={{ backgroundColor: `${prefecture.color}33` }}
+              >
+                <SectionIcon size={20} className="md:h-6 md:w-6" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-base font-bold text-ink md:text-lg">{section.title}</p>
+                <p className="mt-0.5 text-xs text-ink/50 md:text-sm">{section.description}</p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

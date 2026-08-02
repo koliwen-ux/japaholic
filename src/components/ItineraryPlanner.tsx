@@ -11,7 +11,6 @@ import { useContentStore } from "@/lib/content-store";
 import { iconMap } from "@/lib/icons";
 import { buildTripPptx } from "@/lib/export-pptx";
 import type { ItineraryStop } from "@/types";
-import { BudgetPlanner } from "@/components/BudgetPlanner";
 
 function formatDateHeading(date: string) {
   try {
@@ -322,8 +321,7 @@ export function ItineraryPlanner({ title, projectId }: { title: string; projectI
 
   return (
     <div className="w-full max-w-3xl rounded-[2.5rem] bg-white/50 p-4 shadow-xl print:bg-white print:p-0 print:shadow-none sm:p-8 md:max-w-4xl md:p-10 lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem]">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 md:mb-8">
-        <h2 className="text-xl font-bold text-ink md:text-2xl">行程規劃器</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-3 md:mb-8">
         <div className="flex flex-wrap gap-2 print:hidden md:gap-3">
           <button
             type="button"
@@ -351,7 +349,6 @@ export function ItineraryPlanner({ title, projectId }: { title: string; projectI
         ) : (
           dates.map((date) => <DateSection key={date} date={date} />)
         )}
-        <BudgetPlanner />
       </div>
     </div>
   );

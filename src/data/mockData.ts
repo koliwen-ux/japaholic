@@ -10,8 +10,14 @@ import type {
   Project,
 } from "@/types";
 
-/** Prefectures with real coverage content. Others appear on the Japan map as "planned". */
+/**
+ * All 47 Japanese prefectures, each clickable on the nationwide map and able
+ * to hold its own projects. The original Tohoku 7 keep their existing
+ * ids/colors/icons unchanged (real content already exists under them); the
+ * other 40 start out with no projects until someone creates one.
+ */
 export const mockPrefectures: Prefecture[] = [
+  // 東北
   { id: "pref-aomori", name: "青森縣", color: "#62C8A8", icon: "Snowflake" },
   { id: "pref-iwate", name: "岩手縣", color: "#F68A9A", icon: "Mountain" },
   { id: "pref-akita", name: "秋田縣", color: "#75BBE3", icon: "Wheat" },
@@ -19,10 +25,61 @@ export const mockPrefectures: Prefecture[] = [
   { id: "pref-yamagata", name: "山形縣", color: "#FA9E59", icon: "TreePine" },
   { id: "pref-fukushima", name: "福島縣", color: "#F4CE5D", icon: "Castle" },
   { id: "pref-niigata", name: "新潟縣", color: "#F2994A", icon: "Sailboat" },
-];
 
-/** Prefectures currently featured (lit up) on the nationwide map. */
-export const featuredPrefectureIds = ["pref-niigata", "pref-fukushima", "pref-iwate", "pref-akita"];
+  // 北海道
+  { id: "pref-hokkaido", name: "北海道", color: "#8FD9C4", icon: "Snowflake" },
+
+  // 中部・北陸
+  { id: "pref-toyama", name: "富山縣", color: "#E8C88A", icon: "Mountain" },
+  { id: "pref-ishikawa", name: "石川縣", color: "#D9B36B", icon: "Waves" },
+  { id: "pref-fukui", name: "福井縣", color: "#EFD9A6", icon: "Waves" },
+  { id: "pref-nagano", name: "長野縣", color: "#C9A876", icon: "Mountain" },
+  { id: "pref-yamanashi", name: "山梨縣", color: "#E8C88A", icon: "Mountain" },
+  { id: "pref-gifu", name: "岐阜縣", color: "#D9B36B", icon: "TreePine" },
+  { id: "pref-shizuoka", name: "靜岡縣", color: "#EFD9A6", icon: "Waves" },
+  { id: "pref-aichi", name: "愛知縣", color: "#C9A876", icon: "Building2" },
+
+  // 關東
+  { id: "pref-gunma", name: "群馬縣", color: "#F5B87A", icon: "Mountain" },
+  { id: "pref-tochigi", name: "栃木縣", color: "#F0A05C", icon: "TreePine" },
+  { id: "pref-ibaraki", name: "茨城縣", color: "#FACB96", icon: "Wheat" },
+  { id: "pref-saitama", name: "埼玉縣", color: "#F5B87A", icon: "Building2" },
+  { id: "pref-chiba", name: "千葉縣", color: "#F0A05C", icon: "Waves" },
+  { id: "pref-tokyo", name: "東京都", color: "#FACB96", icon: "Building2" },
+  { id: "pref-kanagawa", name: "神奈川縣", color: "#F5B87A", icon: "Ship" },
+
+  // 關西
+  { id: "pref-shiga", name: "滋賀縣", color: "#A8C98A", icon: "Waves" },
+  { id: "pref-kyoto", name: "京都府", color: "#93B873", icon: "Castle" },
+  { id: "pref-hyogo", name: "兵庫縣", color: "#BEDCA3", icon: "Ship" },
+  { id: "pref-osaka", name: "大阪府", color: "#A8C98A", icon: "Building2" },
+  { id: "pref-nara", name: "奈良縣", color: "#93B873", icon: "Landmark" },
+  { id: "pref-mie", name: "三重縣", color: "#BEDCA3", icon: "Waves" },
+  { id: "pref-wakayama", name: "和歌山縣", color: "#A8C98A", icon: "TreePine" },
+
+  // 中國
+  { id: "pref-tottori", name: "鳥取縣", color: "#8FBEE0", icon: "Mountain" },
+  { id: "pref-shimane", name: "島根縣", color: "#6FA6D1", icon: "Landmark" },
+  { id: "pref-okayama", name: "岡山縣", color: "#ACD4EE", icon: "Flower2" },
+  { id: "pref-hiroshima", name: "廣島縣", color: "#8FBEE0", icon: "Landmark" },
+  { id: "pref-yamaguchi", name: "山口縣", color: "#6FA6D1", icon: "Waves" },
+
+  // 四國
+  { id: "pref-kagawa", name: "香川縣", color: "#C4D178", icon: "Waves" },
+  { id: "pref-tokushima", name: "德島縣", color: "#B0C05E", icon: "Mountain" },
+  { id: "pref-ehime", name: "愛媛縣", color: "#D8E094", icon: "Flower2" },
+  { id: "pref-kochi", name: "高知縣", color: "#C4D178", icon: "Sailboat" },
+
+  // 九州沖繩
+  { id: "pref-fukuoka", name: "福岡縣", color: "#7FCDB0", icon: "Building2" },
+  { id: "pref-saga", name: "佐賀縣", color: "#63B896", icon: "TreePine" },
+  { id: "pref-nagasaki", name: "長崎縣", color: "#9BDCC5", icon: "Ship" },
+  { id: "pref-kumamoto", name: "熊本縣", color: "#7FCDB0", icon: "Mountain" },
+  { id: "pref-oita", name: "大分縣", color: "#63B896", icon: "Flame" },
+  { id: "pref-miyazaki", name: "宮崎縣", color: "#9BDCC5", icon: "Sun" },
+  { id: "pref-kagoshima", name: "鹿兒島縣", color: "#7FCDB0", icon: "Flame" },
+  { id: "pref-okinawa", name: "沖繩縣", color: "#63B896", icon: "Anchor" },
+];
 
 /** Prefectural capitals, nested under their parent prefecture. Used for fine-grained itinerary planning. */
 export const mockCities: Location[] = [

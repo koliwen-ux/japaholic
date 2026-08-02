@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { featuredPrefectureIds, mockPrefectures } from "@/data/mockData";
+import { mockPrefectures } from "@/data/mockData";
 import {
   gridColumns,
   gridRows,
@@ -72,7 +72,7 @@ function RegionBackdropBlock({ backdrop }: { backdrop: RegionBackdrop }) {
 function PrefectureTile({ geo }: { geo: JapanPrefectureGeo }) {
   const router = useRouter();
   const prefecture = mockPrefectures.find((item) => item.id === geo.id);
-  const isActive = featuredPrefectureIds.includes(geo.id) && !!prefecture;
+  const isActive = !!prefecture;
   const label = shortPrefectureName(geo.name);
   const isLong = label.length >= 3;
 
@@ -119,7 +119,7 @@ function PrefectureTile({ geo }: { geo: JapanPrefectureGeo }) {
 function PrefectureChip({ id, name }: { id: string; name: string }) {
   const router = useRouter();
   const prefecture = mockPrefectures.find((item) => item.id === id);
-  const isActive = featuredPrefectureIds.includes(id);
+  const isActive = !!prefecture;
   const label = shortPrefectureName(name);
 
   if (isActive && prefecture) {
@@ -174,10 +174,7 @@ export function JapanMap() {
     <div className="w-full max-w-4xl rounded-[2rem] bg-white/60 p-4 shadow-sm sm:p-6 md:max-w-5xl md:p-8 lg:max-w-6xl">
       <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-ink/60 sm:text-sm">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-md bg-pink" /> 已有取材資料（可點擊）
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-md border border-ink/20 bg-white" /> 規劃中
+          <span className="h-3 w-3 rounded-md bg-pink" /> 點擊縣市查看或建立取材專案
         </span>
       </div>
 

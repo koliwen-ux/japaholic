@@ -1,23 +1,35 @@
 import {
+  Anchor,
   Building2,
   Castle,
+  Flame,
+  Flower2,
   Landmark,
   Mountain,
   Sailboat,
+  Ship,
   Snowflake,
+  Sun,
   TreePine,
+  Waves,
   Wheat,
   type LucideIcon,
 } from "lucide-react";
 
 /** Maps the icon-name strings stored in mock data to actual lucide-react components. */
 export const iconMap: Record<string, LucideIcon> = {
+  Anchor,
   Building2,
   Castle,
+  Flame,
+  Flower2,
   Landmark,
   Mountain,
   Sailboat,
+  Ship,
   Snowflake,
+  Sun,
   TreePine,
+  Waves,
   Wheat,
 };

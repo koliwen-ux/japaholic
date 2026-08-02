@@ -30,6 +30,13 @@ const contentTypeTabLabel: Record<ContentType, string> = {
   sns: "SNS 貼文",
 };
 
+// Shorter label for the tab bar specifically, so "SNS 貼文" doesn't wrap on narrow screens.
+const contentTypeTabShortLabel: Record<ContentType, string> = {
+  article: "文章",
+  youtube: "YouTube",
+  sns: "SNS",
+};
+
 const contentStatusStyle: Record<ContentStatus, string> = {
   candidate: "bg-ink/10 text-ink/70",
   draft: "bg-azure/30 text-ink",
@@ -323,7 +330,8 @@ function ContentItemAccordionRow({
           <div className="min-w-0">
             <p
               className={cn(
-                "truncate text-sm font-medium text-ink md:text-base",
+                "text-sm font-medium text-ink md:text-base",
+                isOpen ? "break-words" : "truncate",
                 item.status === "discarded" && "text-ink/40 line-through"
               )}
             >
@@ -510,7 +518,7 @@ export function PrefectureContentSection({ prefecture, project }: { prefecture: 
               )}
             >
               <TabIcon size={15} className="md:h-4 md:w-4" />
-              {contentTypeTabLabel[type]}
+              {contentTypeTabShortLabel[type]}
               <span className="text-xs text-ink/40">{count}</span>
             </button>
           );

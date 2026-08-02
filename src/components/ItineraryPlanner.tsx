@@ -4,13 +4,18 @@ import { useMemo, useState } from "react";
 import { Reorder } from "framer-motion";
 import { addDays, format, parseISO } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { GripVertical, MapPin, Plus, Presentation, Trash2 } from "lucide-react";
+import { CalendarPlus, GripVertical, Map, MapPin, Plus, Presentation, Trash2 } from "lucide-react";
 import { mockLocations } from "@/data/mockData";
 import { useItinerary } from "@/lib/itinerary-store";
 import { useContentStore } from "@/lib/content-store";
 import { iconMap } from "@/lib/icons";
 import { buildTripPptx } from "@/lib/export-pptx";
+import { buildTripIcs } from "@/lib/export-ics";
 import type { ItineraryStop } from "@/types";
+
+function googleMapsSearchUrl(query: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
 function formatDateHeading(date: string) {
   try {
@@ -192,14 +197,25 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
           onChange={(event) => updateStop(stop.id, { date: event.target.value })}
           className="rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
         />
-        <button
-          type="button"
-          onClick={() => removeStop(stop.id)}
-          aria-label="刪除景點"
-          className="rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
-        >
-          <Trash2 size={14} className="md:h-4 md:w-4" />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <a
+            href={googleMapsSearchUrl(stop.spotName)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="在 Google Maps 開啟"
+            className="rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+          >
+            <Map size={14} className="md:h-4 md:w-4" />
+          </a>
+          <button
+            type="button"
+            onClick={() => removeStop(stop.id)}
+            aria-label="刪除景點"
+            className="rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+          >
+            <Trash2 size={14} className="md:h-4 md:w-4" />
+          </button>
+        </div>
       </div>
     </Reorder.Item>
   );
@@ -319,6 +335,10 @@ export function ItineraryPlanner({ title, projectId }: { title: string; projectI
     }
   };
 
+  const handleExportIcs = () => {
+    buildTripIcs({ tripTitle: title, stops });
+  };
+
   return (
     <div className="w-full max-w-3xl rounded-[2.5rem] bg-white/50 p-4 shadow-xl print:bg-white print:p-0 print:shadow-none sm:p-8 md:max-w-4xl md:p-10 lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem]">
       <div className="mb-6 flex flex-wrap items-center justify-end gap-3 md:mb-8">
@@ -337,6 +357,14 @@ export function ItineraryPlanner({ title, projectId }: { title: string; projectI
             className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/70 shadow-sm transition-colors hover:bg-ink/5 disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
           >
             <Presentation size={14} className="md:h-4 md:w-4" /> {isExportingPptx ? "產生中…" : "下載 PPT"}
+          </button>
+          <button
+            type="button"
+            onClick={handleExportIcs}
+            disabled={stops.length === 0}
+            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/70 shadow-sm transition-colors hover:bg-ink/5 disabled:opacity-50 md:px-4 md:py-2 md:text-sm"
+          >
+            <CalendarPlus size={14} className="md:h-4 md:w-4" /> 加入行事曆
           </button>
         </div>
       </div>

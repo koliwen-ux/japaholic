@@ -75,7 +75,7 @@ function AddStopForm({ date, onDone }: { date: string; onDone: () => void }) {
           className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
         />
       </div>
-      <div className="flex gap-2 md:gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row md:gap-3">
         <input
           value={transport}
           onChange={(event) => setTransport(event.target.value)}
@@ -89,7 +89,7 @@ function AddStopForm({ date, onDone }: { date: string; onDone: () => void }) {
           className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
         />
       </div>
-      <div className="flex gap-2 md:gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row md:gap-3">
         <input
           type="time"
           value={startTime}
@@ -139,58 +139,60 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   return (
     <Reorder.Item
       value={stop.id}
-      className="flex items-start gap-3 rounded-xl bg-white/80 p-3 shadow-sm md:gap-4 md:p-4"
+      className="flex flex-col gap-2 rounded-xl bg-white/80 p-3 shadow-sm sm:flex-row sm:items-start sm:gap-3 md:gap-4 md:p-4"
     >
-      <span className="mt-1.5 shrink-0 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
-        <GripVertical size={16} className="md:h-5 md:w-5" />
-      </span>
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">
-        <Icon size={14} className="md:h-[18px] md:w-[18px]" />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <input
-          value={stop.spotName}
-          onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
-          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
-        />
-        <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
-        <div className="flex gap-1.5">
+      <div className="flex min-w-0 flex-1 items-start gap-3 md:gap-4">
+        <span className="mt-1.5 shrink-0 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
+          <GripVertical size={16} className="md:h-5 md:w-5" />
+        </span>
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">
+          <Icon size={14} className="md:h-[18px] md:w-[18px]" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <input
-            value={stop.transport ?? ""}
-            onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
-            placeholder="交通方式..."
-            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            value={stop.spotName}
+            onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
+            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
           />
-          <input
-            value={stop.contentFocus ?? ""}
-            onChange={(event) => updateStop(stop.id, { contentFocus: event.target.value })}
-            placeholder="內容重點..."
-            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
+          <div className="flex flex-col gap-1.5 sm:flex-row">
+            <input
+              value={stop.transport ?? ""}
+              onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
+              placeholder="交通方式..."
+              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+            <input
+              value={stop.contentFocus ?? ""}
+              onChange={(event) => updateStop(stop.id, { contentFocus: event.target.value })}
+              placeholder="內容重點..."
+              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 sm:flex-row">
+            <input
+              type="time"
+              value={stop.startTime ?? ""}
+              onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
+              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+            <input
+              type="time"
+              value={stop.endTime ?? ""}
+              onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
+              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+          </div>
+          <textarea
+            value={stop.note}
+            onChange={(event) => updateStop(stop.id, { note: event.target.value })}
+            placeholder="自訂筆記..."
+            rows={1}
+            className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
           />
         </div>
-        <div className="flex gap-1.5">
-          <input
-            type="time"
-            value={stop.startTime ?? ""}
-            onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
-            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-          />
-          <input
-            type="time"
-            value={stop.endTime ?? ""}
-            onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
-            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-          />
-        </div>
-        <textarea
-          value={stop.note}
-          onChange={(event) => updateStop(stop.id, { note: event.target.value })}
-          placeholder="自訂筆記..."
-          rows={1}
-          className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-        />
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1.5 print:hidden">
+      <div className="flex shrink-0 flex-row items-center justify-between gap-1.5 sm:flex-col sm:items-end print:hidden">
         <input
           type="date"
           value={stop.date}

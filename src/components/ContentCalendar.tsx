@@ -17,10 +17,11 @@ import {
 import { zhTW } from "date-fns/locale";
 import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import { mockPrefectures } from "@/data/mockData";
-import type { ContentItem, ContentStatus, ContentType, CoveragePlan } from "@/types";
+import type { ContentItem, ContentStatus, ContentType } from "@/types";
 import { cn } from "@/lib/utils";
 import { resolvePrefectureId } from "@/lib/location";
 import { useContentStore } from "@/lib/content-store";
+import type { ItineraryDateEntry } from "@/lib/data/load-all-itinerary-dates";
 
 const typeBadgeStyle: Record<ContentType, string> = {
   article: "bg-azure text-ink",
@@ -55,9 +56,9 @@ const filterableStatuses: ContentStatus[] = ["candidate", "draft", "scheduled", 
 
 type DayEvent =
   | { kind: "content"; id: string; item: ContentItem }
-  | { kind: "coverage"; id: string; plan: CoveragePlan; assignees: string[] };
+  | { kind: "coverage"; id: string; spot: string; assignees: string[] };
 
-export function ContentCalendar() {
+export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryDateEntry[] }) {
   const [month, setMonth] = useState(() => new Date());
   const [prefectureFilter, setPrefectureFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">("all");
@@ -85,6 +86,13 @@ export function ContentCalendar() {
     });
   }, [coveragePlans, projectPrefectureMap, prefectureFilter]);
 
+  const filteredItineraryDates = useMemo(() => {
+    return itineraryDates.filter((entry) => {
+      if (prefectureFilter === "all") return true;
+      return projectPrefectureMap.get(entry.projectId)?.prefectureId === prefectureFilter;
+    });
+  }, [itineraryDates, projectPrefectureMap, prefectureFilter]);
+
   const eventsByDate = useMemo(() => {
     const map = new Map<string, DayEvent[]>();
     for (const item of filteredItems) {
@@ -97,11 +105,18 @@ export function ContentCalendar() {
       if (!plan.date) continue;
       const assignees = projectPrefectureMap.get(plan.projectId)?.assignees ?? [];
       const list = map.get(plan.date) ?? [];
-      list.push({ kind: "coverage", id: plan.id, plan, assignees });
+      list.push({ kind: "coverage", id: plan.id, spot: plan.spot, assignees });
       map.set(plan.date, list);
     }
+    for (const entry of filteredItineraryDates) {
+      if (!entry.date) continue;
+      const assignees = projectPrefectureMap.get(entry.projectId)?.assignees ?? [];
+      const list = map.get(entry.date) ?? [];
+      list.push({ kind: "coverage", id: `stop-${entry.projectId}-${entry.date}-${entry.spotName}`, spot: entry.spotName, assignees });
+      map.set(entry.date, list);
+    }
     return map;
-  }, [filteredItems, filteredCoveragePlans, projectPrefectureMap]);
+  }, [filteredItems, filteredCoveragePlans, filteredItineraryDates, projectPrefectureMap]);
 
   const monthStart = startOfMonth(month);
   const monthEnd = endOfMonth(month);
@@ -257,12 +272,12 @@ export function ContentCalendar() {
                   ) : (
                     <span
                       key={event.id}
-                      title={`取材安排 · ${event.plan.spot}${event.assignees.length ? " · " + event.assignees.join("、") : ""}`}
+                      title={`取材安排 · ${event.spot}${event.assignees.length ? " · " + event.assignees.join("、") : ""}`}
                       className="flex items-center gap-1 truncate rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-ink/70 md:px-2 md:py-1 md:text-xs"
                     >
                       <Camera size={10} className="shrink-0" />
                       <span className="truncate">
-                        {event.plan.spot}
+                        {event.spot}
                         {event.assignees.length > 0 ? `・${event.assignees.join("、")}` : ""}
                       </span>
                     </span>

@@ -88,6 +88,15 @@ create table calendar_progress (
   created_at timestamptz not null default now()
 );
 
+create table media_assets (
+  id text primary key,
+  project_id text not null references projects(id) on delete cascade,
+  title text not null,
+  url text not null,
+  note text not null default '',
+  created_at timestamptz not null default now()
+);
+
 create index coverage_checklist_items_plan_id_idx on coverage_checklist_items(plan_id);
 create index itinerary_stops_project_id_idx on itinerary_stops(project_id);
 create index itinerary_stops_date_position_idx on itinerary_stops(date, position);
@@ -95,3 +104,4 @@ create index budget_items_project_id_idx on budget_items(project_id);
 create index content_items_project_id_idx on content_items(project_id);
 create index coverage_plans_project_id_idx on coverage_plans(project_id);
 create index calendar_progress_project_id_idx on calendar_progress(project_id);
+create index media_assets_project_id_idx on media_assets(project_id);

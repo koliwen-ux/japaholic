@@ -5,6 +5,7 @@ import type {
   CoveragePlan,
   ItineraryStop,
   Location,
+  MediaAsset,
   Prefecture,
   Project,
 } from "@/types";
@@ -952,3 +953,10 @@ export const mockBudgetItems: BudgetItem[] = [
   { id: "budget-shooting", projectId: "project-legacy-fukushima", category: "拍攝額外支出", amount: 3000, note: "寄物櫃、飲品、補拍餐點" },
   { id: "budget-contingency", projectId: "project-legacy-fukushima", category: "緊急備用金", amount: 4000, note: "錯過班次、臨時叫車或天候調整" },
 ];
+
+/**
+ * Links to archived raw footage/photos (hosted externally, e.g. Google
+ * Drive), organized per project. New feature: no historical data to seed.
+ * Seed-only: see the note on `mockContentItems` above.
+ */
+export const mockMediaAssets: MediaAsset[] = [];

@@ -31,7 +31,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }>) {
-  const { contentItems, coveragePlans, calendarProgress, projects } = await loadInitialState();
+  const { contentItems, coveragePlans, calendarProgress, projects, mediaAssets } = await loadInitialState();
 
   return (
     <html
@@ -44,6 +44,7 @@ export default async function RootLayout({
           initialCoveragePlans={coveragePlans}
           initialCalendarProgress={calendarProgress}
           initialProjects={projects}
+          initialMediaAssets={mediaAssets}
         >
           <Navbar />
           <div className="flex flex-1">

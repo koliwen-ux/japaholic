@@ -8,7 +8,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { CalendarProgress, ContentItem, CoveragePlan, CoveragePlanChecklistItem, Project } from "@/types";
+import type {
+  CalendarProgress,
+  ContentItem,
+  CoveragePlan,
+  CoveragePlanChecklistItem,
+  MediaAsset,
+  Project,
+} from "@/types";
 import {
   createContentItem,
   deleteContentItem,
@@ -32,6 +39,11 @@ import {
   deleteProject,
   updateProject as updateProjectAction,
 } from "@/lib/actions/projects";
+import {
+  createMediaAsset,
+  deleteMediaAsset,
+  updateMediaAsset as updateMediaAssetAction,
+} from "@/lib/actions/media-assets";
 
 type NewContentItemInput = Omit<ContentItem, "id">;
 type ContentItemPatch = Partial<Omit<ContentItem, "id">>;
@@ -44,6 +56,9 @@ type CalendarTaskPatch = Partial<Omit<CalendarProgress, "id">>;
 
 type NewProjectInput = Omit<Project, "id">;
 type ProjectPatch = Partial<Omit<Project, "id">>;
+
+type NewMediaAssetInput = Omit<MediaAsset, "id">;
+type MediaAssetPatch = Partial<Omit<MediaAsset, "id">>;
 
 interface ContentStoreValue {
   contentItems: ContentItem[];
@@ -69,6 +84,11 @@ interface ContentStoreValue {
   addProject: (input: NewProjectInput) => void;
   updateProject: (id: string, patch: ProjectPatch) => void;
   removeProject: (id: string) => void;
+
+  mediaAssets: MediaAsset[];
+  addMediaAsset: (input: NewMediaAssetInput) => void;
+  updateMediaAsset: (id: string, patch: MediaAssetPatch) => void;
+  removeMediaAsset: (id: string) => void;
 }
 
 const ContentStoreContext = createContext<ContentStoreValue | null>(null);
@@ -84,18 +104,21 @@ export function ContentStoreProvider({
   initialCoveragePlans,
   initialCalendarProgress,
   initialProjects,
+  initialMediaAssets,
   children,
 }: {
   initialContentItems: ContentItem[];
   initialCoveragePlans: CoveragePlan[];
   initialCalendarProgress: CalendarProgress[];
   initialProjects: Project[];
+  initialMediaAssets: MediaAsset[];
   children: ReactNode;
 }) {
   const [contentItems, setContentItems] = useState<ContentItem[]>(initialContentItems);
   const [coveragePlans, setCoveragePlans] = useState<CoveragePlan[]>(initialCoveragePlans);
   const [calendarProgress, setCalendarProgress] = useState<CalendarProgress[]>(initialCalendarProgress);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>(initialMediaAssets);
 
   const addContentItem = useCallback((input: NewContentItemInput) => {
     const item: ContentItem = { id: generateId("content"), ...input };
@@ -211,6 +234,22 @@ export function ContentStoreProvider({
     void deleteProject(id);
   }, []);
 
+  const addMediaAsset = useCallback((input: NewMediaAssetInput) => {
+    const asset: MediaAsset = { id: generateId("media"), ...input };
+    setMediaAssets((prev) => [...prev, asset]);
+    void createMediaAsset(asset);
+  }, []);
+
+  const updateMediaAsset = useCallback((id: string, patch: MediaAssetPatch) => {
+    setMediaAssets((prev) => prev.map((asset) => (asset.id === id ? { ...asset, ...patch } : asset)));
+    void updateMediaAssetAction(id, patch);
+  }, []);
+
+  const removeMediaAsset = useCallback((id: string) => {
+    setMediaAssets((prev) => prev.filter((asset) => asset.id !== id));
+    void deleteMediaAsset(id);
+  }, []);
+
   const value = useMemo(
     () => ({
       contentItems,
@@ -233,6 +272,10 @@ export function ContentStoreProvider({
       addProject,
       updateProject,
       removeProject,
+      mediaAssets,
+      addMediaAsset,
+      updateMediaAsset,
+      removeMediaAsset,
     }),
     [
       contentItems,
@@ -255,6 +298,10 @@ export function ContentStoreProvider({
       addProject,
       updateProject,
       removeProject,
+      mediaAssets,
+      addMediaAsset,
+      updateMediaAsset,
+      removeMediaAsset,
     ]
   );
 

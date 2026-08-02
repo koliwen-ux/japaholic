@@ -15,6 +15,7 @@ import {
   mockContentItems,
   mockCoveragePlans,
   mockItineraryStops,
+  mockMediaAssets,
   mockProjects,
 } from "../src/data/mockData";
 
@@ -138,6 +139,19 @@ async function seed() {
   const { error: calendarProgressError } = await supabase.from("calendar_progress").insert(calendarProgressRows);
   if (calendarProgressError) throw calendarProgressError;
   console.log(`calendar_progress: inserted ${calendarProgressRows.length}`);
+
+  if (mockMediaAssets.length > 0) {
+    const mediaAssetRows = mockMediaAssets.map((asset) => ({
+      id: asset.id,
+      project_id: asset.projectId,
+      title: asset.title,
+      url: asset.url,
+      note: asset.note ?? "",
+    }));
+    const { error: mediaAssetsError } = await supabase.from("media_assets").insert(mediaAssetRows);
+    if (mediaAssetsError) throw mediaAssetsError;
+    console.log(`media_assets: inserted ${mediaAssetRows.length}`);
+  }
 
   console.log("Seed complete.");
 }

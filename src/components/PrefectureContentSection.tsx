@@ -16,6 +16,7 @@ import { mockPrefectures } from "@/data/mockData";
 import type { ContentItem, ContentStatus, ContentType, Prefecture, Project } from "@/types";
 import { cn } from "@/lib/utils";
 import { useContentStore } from "@/lib/content-store";
+import { MediaLibrarySection } from "@/components/MediaLibrarySection";
 
 const contentTypeIcon: Record<ContentType, typeof FileText> = {
   article: FileText,
@@ -564,6 +565,8 @@ export function PrefectureContentSection({ prefecture, project }: { prefecture: 
           </ul>
         )}
       </div>
+
+      <MediaLibrarySection project={project} />
     </div>
   );
 }

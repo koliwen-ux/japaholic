@@ -128,6 +128,16 @@ export interface CalendarProgress {
   completed: boolean;
 }
 
+/** A link to an archived piece of raw footage/photos (hosted elsewhere, e.g. Google Drive). */
+export interface MediaAsset {
+  id: string;
+  /** Owning `Project.id`. */
+  projectId: string;
+  title: string;
+  url: string;
+  note?: string;
+}
+
 export type CoveragePlanStatus = "planned" | "confirmed" | "completed";
 
 /** A single must-shoot item on a coverage plan's shot checklist. */

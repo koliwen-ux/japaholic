@@ -1,12 +1,13 @@
 import "server-only";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import type { CalendarProgress, ContentItem, CoveragePlan, Project } from "@/types";
+import type { CalendarProgress, ContentItem, CoveragePlan, MediaAsset, Project } from "@/types";
 
 export interface InitialState {
   contentItems: ContentItem[];
   coveragePlans: CoveragePlan[];
   calendarProgress: CalendarProgress[];
   projects: Project[];
+  mediaAssets: MediaAsset[];
 }
 
 const empty: InitialState = {
@@ -14,6 +15,7 @@ const empty: InitialState = {
   coveragePlans: [],
   calendarProgress: [],
   projects: [],
+  mediaAssets: [],
 };
 
 export async function loadInitialState(): Promise<InitialState> {
@@ -25,13 +27,14 @@ export async function loadInitialState(): Promise<InitialState> {
 
   const supabase = getSupabaseServerClient();
 
-  const [contentItemsRes, coveragePlansRes, checklistRes, calendarProgressRes, projectsRes] =
+  const [contentItemsRes, coveragePlansRes, checklistRes, calendarProgressRes, projectsRes, mediaAssetsRes] =
     await Promise.all([
       supabase.from("content_items").select("*"),
       supabase.from("coverage_plans").select("*").order("date", { ascending: true }),
       supabase.from("coverage_checklist_items").select("*"),
       supabase.from("calendar_progress").select("*").order("date", { ascending: true }),
       supabase.from("projects").select("*"),
+      supabase.from("media_assets").select("*"),
     ]);
 
   for (const [label, res] of [
@@ -40,6 +43,7 @@ export async function loadInitialState(): Promise<InitialState> {
     ["coverage_checklist_items", checklistRes],
     ["calendar_progress", calendarProgressRes],
     ["projects", projectsRes],
+    ["media_assets", mediaAssetsRes],
   ] as const) {
     if (res.error) console.error(`loadInitialState: ${label} failed`, res.error);
   }
@@ -101,5 +105,13 @@ export async function loadInitialState(): Promise<InitialState> {
     notes: row.notes || undefined,
   }));
 
-  return { contentItems, coveragePlans, calendarProgress, projects };
+  const mediaAssets: MediaAsset[] = (mediaAssetsRes.data ?? []).map((row) => ({
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    url: row.url,
+    note: row.note || undefined,
+  }));
+
+  return { contentItems, coveragePlans, calendarProgress, projects, mediaAssets };
 }

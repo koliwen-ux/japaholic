@@ -52,6 +52,7 @@ async function seed() {
     title_alternatives: item.titleAlternatives ?? [],
     format: item.format ?? null,
     related_prefecture_ids: item.relatedPrefectureIds ?? [],
+    position: item.position,
   }));
   const { error: contentItemsError } = await supabase.from("content_items").insert(contentItemsRows);
   if (contentItemsError) throw contentItemsError;

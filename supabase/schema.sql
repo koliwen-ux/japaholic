@@ -31,6 +31,7 @@ create table content_items (
   title_alternatives text[] not null default '{}',
   format text,
   related_prefecture_ids text[] not null default '{}',
+  position integer not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -102,6 +103,7 @@ create index itinerary_stops_project_id_idx on itinerary_stops(project_id);
 create index itinerary_stops_date_position_idx on itinerary_stops(date, position);
 create index budget_items_project_id_idx on budget_items(project_id);
 create index content_items_project_id_idx on content_items(project_id);
+create index content_items_project_type_position_idx on content_items(project_id, type, position);
 create index coverage_plans_project_id_idx on coverage_plans(project_id);
 create index calendar_progress_project_id_idx on calendar_progress(project_id);
 create index media_assets_project_id_idx on media_assets(project_id);

@@ -161,6 +161,7 @@ export const mockContentItems: ContentItem[] = [
   // 青森縣
   {
     id: "content-aomori-article",
+    position: 0,
     projectId: "project-legacy-aomori",
     type: "article",
     title: "青森睡魔祭全攻略：跟著百年燈籠遊行感受夏日祭典魂",
@@ -171,6 +172,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-aomori-video",
+    position: 0,
     projectId: "project-legacy-aomori",
     type: "youtube",
     title: "弘前城賞櫻直擊！空拍公開日本三大夜櫻絕景",
@@ -181,6 +183,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-aomori-sns",
+    position: 0,
     projectId: "project-legacy-aomori",
     type: "sns",
     title: "十和田湖紅葉即時打卡分享",
@@ -193,6 +196,7 @@ export const mockContentItems: ContentItem[] = [
   // 岩手縣
   {
     id: "content-iwate-article",
+    position: 1,
     projectId: "project-legacy-iwate",
     type: "article",
     title: "盛岡冷麵 vs 三大麵：在地人激推的岩手美食清單",
@@ -203,6 +207,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-iwate-video",
+    position: 1,
     projectId: "project-legacy-iwate",
     type: "youtube",
     title: "平泉世界遺產中尊寺金色堂巡禮",
@@ -213,6 +218,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-iwate-sns",
+    position: 1,
     projectId: "project-legacy-iwate",
     type: "sns",
     title: "龍泉洞鐘乳石夢幻藍洞限時動態",
@@ -225,6 +231,7 @@ export const mockContentItems: ContentItem[] = [
   // 宮城縣
   {
     id: "content-miyagi-article",
+    position: 2,
     projectId: "project-legacy-miyagi",
     type: "article",
     title: "仙台一日遊：牛舌名店排隊指南",
@@ -235,6 +242,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-miyagi-video",
+    position: 2,
     projectId: "project-legacy-miyagi",
     type: "youtube",
     title: "松島遊覽船直擊日本三景之美",
@@ -245,6 +253,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-miyagi-sns",
+    position: 2,
     projectId: "project-legacy-miyagi",
     type: "sns",
     title: "仙台七夕祭巨型和紙燈飾快拍",
@@ -257,6 +266,7 @@ export const mockContentItems: ContentItem[] = [
   // 秋田縣
   {
     id: "content-akita-article",
+    position: 3,
     projectId: "project-legacy-akita",
     type: "article",
     title: "秋田美人湯溫泉巡禮：乳頭溫泉鄉七湯制霸",
@@ -267,6 +277,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-akita-video",
+    position: 3,
     projectId: "project-legacy-akita",
     type: "youtube",
     title: "角館武家屋敷散策：東北小京都的春日物語",
@@ -277,6 +288,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-akita-sns",
+    position: 3,
     projectId: "project-legacy-akita",
     type: "sns",
     title: "男鹿半島生剝鬼太鼓體驗直播預告",
@@ -289,6 +301,7 @@ export const mockContentItems: ContentItem[] = [
   // 山形縣
   {
     id: "content-yamagata-article",
+    position: 4,
     projectId: "project-legacy-yamagata",
     type: "article",
     title: "藏王樹冰絕景攻略：冬季限定的雪怪森林",
@@ -299,6 +312,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-yamagata-video",
+    position: 4,
     projectId: "project-legacy-yamagata",
     type: "youtube",
     title: "銀山溫泉大正浪漫夜景空拍紀錄",
@@ -309,6 +323,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-yamagata-sns",
+    position: 4,
     projectId: "project-legacy-yamagata",
     type: "sns",
     title: "山形櫻桃季採果體驗限時分享",
@@ -321,6 +336,7 @@ export const mockContentItems: ContentItem[] = [
   // 福島縣
   {
     id: "content-fukushima-article",
+    position: 5,
     projectId: "project-legacy-fukushima",
     type: "article",
     title: "會津若松鶴城賞櫻與白虎隊歷史散步",
@@ -331,6 +347,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-fukushima-video",
+    position: 5,
     projectId: "project-legacy-fukushima",
     type: "youtube",
     title: "大內宿合掌造聚落雪景紀實",
@@ -341,6 +358,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-fukushima-sns",
+    position: 5,
     projectId: "project-legacy-fukushima",
     type: "sns",
     title: "福島桃子甜點下午茶打卡地圖",
@@ -353,6 +371,7 @@ export const mockContentItems: ContentItem[] = [
   // 新潟縣
   {
     id: "content-niigata-article",
+    position: 6,
     projectId: "project-legacy-niigata",
     type: "article",
     title: "新潟越光米產地巡禮：從稻田到餐桌的極致美味",
@@ -363,6 +382,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-niigata-video",
+    position: 6,
     projectId: "project-legacy-niigata",
     type: "youtube",
     title: "佐渡島渡輪之旅：金山遺跡與朱鷺保護中心直擊",
@@ -373,6 +393,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "content-niigata-sns",
+    position: 6,
     projectId: "project-legacy-niigata",
     type: "sns",
     title: "古町藝妓與日本酒吧巡禮限時動態",
@@ -386,6 +407,7 @@ export const mockContentItems: ContentItem[] = [
   // (2026_08_福島夏日漫旅.pptx), still at the candidate stage (no url/date yet).
   {
     id: "proposal-fukushima-article-guide",
+    position: 7,
     projectId: "project-legacy-fukushima",
     type: "article",
     status: "candidate",
@@ -410,6 +432,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-article-food",
+    position: 8,
     projectId: "project-legacy-fukushima",
     type: "article",
     status: "candidate",
@@ -424,6 +447,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-article-roundup-scenic",
+    position: 9,
     projectId: "project-legacy-fukushima",
     type: "article",
     status: "candidate",
@@ -439,6 +463,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-article-roundup-cool",
+    position: 10,
     projectId: "project-legacy-fukushima",
     type: "article",
     status: "candidate",
@@ -463,6 +488,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-article-roundup-blue",
+    position: 11,
     projectId: "project-legacy-fukushima",
     type: "article",
     status: "candidate",
@@ -477,6 +503,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-youtube-main",
+    position: 7,
     projectId: "project-legacy-fukushima",
     type: "youtube",
     status: "candidate",
@@ -500,6 +527,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-ouchijuku",
+    position: 7,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -510,6 +538,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-fruit",
+    position: 8,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -520,6 +549,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-tadami-line",
+    position: 9,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -530,6 +560,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-kirin-park",
+    position: 10,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -540,6 +571,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-mascot",
+    position: 11,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -550,6 +582,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-must-eat",
+    position: 12,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -560,6 +593,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-goshikinuma",
+    position: 13,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",
@@ -570,6 +604,7 @@ export const mockContentItems: ContentItem[] = [
   },
   {
     id: "proposal-fukushima-sns-aizu",
+    position: 14,
     projectId: "project-legacy-fukushima",
     type: "sns",
     status: "candidate",

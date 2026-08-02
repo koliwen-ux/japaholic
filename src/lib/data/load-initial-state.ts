@@ -29,7 +29,7 @@ export async function loadInitialState(): Promise<InitialState> {
 
   const [contentItemsRes, coveragePlansRes, checklistRes, calendarProgressRes, projectsRes, mediaAssetsRes] =
     await Promise.all([
-      supabase.from("content_items").select("*"),
+      supabase.from("content_items").select("*").order("position", { ascending: true }),
       supabase.from("coverage_plans").select("*").order("date", { ascending: true }),
       supabase.from("coverage_checklist_items").select("*"),
       supabase.from("calendar_progress").select("*").order("date", { ascending: true }),
@@ -67,6 +67,7 @@ export async function loadInitialState(): Promise<InitialState> {
     titleAlternatives: row.title_alternatives?.length ? row.title_alternatives : undefined,
     format: row.format ?? undefined,
     relatedPrefectureIds: row.related_prefecture_ids?.length ? row.related_prefecture_ids : undefined,
+    position: row.position ?? 0,
   }));
 
   const checklistByPlan = new Map<string, CoveragePlan["checklist"]>();

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, Reorder } from "framer-motion";
 import {
   ChevronDown,
   ExternalLink,
   FileText,
+  GripVertical,
   Hash,
   Pencil,
   PlayCircle,
@@ -321,8 +322,11 @@ function ContentItemAccordionRow({
   };
 
   return (
-    <li className="overflow-hidden rounded-2xl bg-white/70 shadow-sm">
+    <Reorder.Item value={item.id} className="overflow-hidden rounded-2xl bg-white/70 shadow-sm">
       <div className="flex w-full items-center justify-between gap-3 p-4 md:p-5">
+        <span className="shrink-0 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
+          <GripVertical size={16} className="md:h-5 md:w-5" />
+        </span>
         <button type="button" onClick={onToggle} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-11 md:w-11">
             <ItemIcon size={16} className="md:h-5 md:w-5" />
@@ -485,7 +489,7 @@ function ContentItemAccordionRow({
           </div>
         )}
       </motion.div>
-    </li>
+    </Reorder.Item>
   );
 }
 
@@ -493,10 +497,13 @@ export function PrefectureContentSection({ prefecture, project }: { prefecture: 
   const [activeType, setActiveType] = useState<ContentType>("article");
   const [isAdding, setIsAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const { contentItems, addContentItem } = useContentStore();
+  const { contentItems, addContentItem, reorderContentItems } = useContentStore();
 
   const relatedContent = contentItems.filter((item) => item.projectId === project.id);
-  const items = relatedContent.filter((item) => item.type === activeType);
+  const items = relatedContent
+    .filter((item) => item.type === activeType)
+    .sort((a, b) => a.position - b.position);
+  const itemIds = items.map((item) => item.id);
 
   return (
     <div>
@@ -561,7 +568,12 @@ export function PrefectureContentSection({ prefecture, project }: { prefecture: 
         {items.length === 0 ? (
           <p className="text-sm text-ink/40 md:text-base">目前尚無安排的{contentTypeTabLabel[activeType]}。</p>
         ) : (
-          <ul className="flex flex-col gap-2 md:gap-3">
+          <Reorder.Group
+            axis="y"
+            values={itemIds}
+            onReorder={(newOrder) => reorderContentItems(newOrder as string[])}
+            className="flex flex-col gap-2 md:gap-3"
+          >
             {items.map((item) => (
               <ContentItemAccordionRow
                 key={item.id}
@@ -570,7 +582,7 @@ export function PrefectureContentSection({ prefecture, project }: { prefecture: 
                 onToggle={() => setOpenId((current) => (current === item.id ? null : item.id))}
               />
             ))}
-          </ul>
+          </Reorder.Group>
         )}
       </div>
 

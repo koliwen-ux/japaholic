@@ -19,6 +19,7 @@ import type {
 import {
   createContentItem,
   deleteContentItem,
+  reorderContentItems as reorderContentItemsAction,
   updateContentItem as updateContentItemAction,
 } from "@/lib/actions/content-items";
 import {
@@ -45,7 +46,7 @@ import {
   updateMediaAsset as updateMediaAssetAction,
 } from "@/lib/actions/media-assets";
 
-type NewContentItemInput = Omit<ContentItem, "id">;
+type NewContentItemInput = Omit<ContentItem, "id" | "position">;
 type ContentItemPatch = Partial<Omit<ContentItem, "id">>;
 
 type NewCoveragePlanInput = Omit<CoveragePlan, "id" | "checklist">;
@@ -65,6 +66,7 @@ interface ContentStoreValue {
   addContentItem: (input: NewContentItemInput) => void;
   updateContentItem: (id: string, patch: ContentItemPatch) => void;
   removeContentItem: (id: string) => void;
+  reorderContentItems: (orderedIds: string[]) => void;
 
   coveragePlans: CoveragePlan[];
   addCoveragePlan: (input: NewCoveragePlanInput) => void;
@@ -121,14 +123,31 @@ export function ContentStoreProvider({
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>(initialMediaAssets);
 
   const addContentItem = useCallback((input: NewContentItemInput) => {
-    const item: ContentItem = { id: generateId("content"), ...input };
-    setContentItems((prev) => [...prev, item]);
-    void createContentItem(item);
+    const id = generateId("content");
+    let item: ContentItem | undefined;
+    setContentItems((prev) => {
+      const position = prev.filter((i) => i.projectId === input.projectId && i.type === input.type).length;
+      item = { id, position, ...input };
+      return [...prev, item];
+    });
+    void createContentItem(item as ContentItem);
   }, []);
 
   const updateContentItem = useCallback((id: string, patch: ContentItemPatch) => {
     setContentItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
     void updateContentItemAction(id, patch);
+  }, []);
+
+  const reorderContentItems = useCallback((orderedIds: string[]) => {
+    setContentItems((prev) => {
+      const orderedSet = new Set(orderedIds);
+      const reordered = orderedIds
+        .map((id) => prev.find((item) => item.id === id))
+        .filter((item): item is ContentItem => Boolean(item));
+      const others = prev.filter((item) => !orderedSet.has(item.id));
+      return [...others, ...reordered];
+    });
+    void reorderContentItemsAction(orderedIds);
   }, []);
 
   const removeContentItem = useCallback((id: string) => {
@@ -256,6 +275,7 @@ export function ContentStoreProvider({
       addContentItem,
       updateContentItem,
       removeContentItem,
+      reorderContentItems,
       coveragePlans,
       addCoveragePlan,
       updateCoveragePlan,
@@ -282,6 +302,7 @@ export function ContentStoreProvider({
       addContentItem,
       updateContentItem,
       removeContentItem,
+      reorderContentItems,
       coveragePlans,
       addCoveragePlan,
       updateCoveragePlan,

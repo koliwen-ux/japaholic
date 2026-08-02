@@ -66,6 +66,8 @@ export interface ContentItem {
   format?: string;
   /** Other prefectures covered by a cross-prefecture roundup piece. */
   relatedPrefectureIds?: string[];
+  /** Manual sort order within the same project + type list (lower first). */
+  position: number;
 }
 
 /** A single day's stop within a project's itinerary. */

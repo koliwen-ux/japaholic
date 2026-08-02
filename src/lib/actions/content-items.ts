@@ -22,8 +22,18 @@ export async function createContentItem(item: ContentItem) {
     title_alternatives: item.titleAlternatives ?? [],
     format: item.format ?? null,
     related_prefecture_ids: item.relatedPrefectureIds ?? [],
+    position: item.position,
   });
   if (error) console.error("createContentItem failed", error);
+}
+
+export async function reorderContentItems(orderedIds: string[]) {
+  const supabase = getSupabaseServerClient();
+  const results = await Promise.all(
+    orderedIds.map((id, index) => supabase.from("content_items").update({ position: index }).eq("id", id))
+  );
+  const failed = results.find((result) => result.error);
+  if (failed?.error) console.error("reorderContentItems failed", failed.error);
 }
 
 export async function updateContentItem(id: string, patch: Partial<Omit<ContentItem, "id">>) {

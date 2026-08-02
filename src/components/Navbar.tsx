@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "全日本取材地圖", icon: MapIcon },
-  { href: "/calendar", label: "內容上線行事曆", icon: CalendarClock },
+  { href: "/calendar", label: "整體進度行事曆", icon: CalendarClock },
 ];
 
 export function Navbar() {

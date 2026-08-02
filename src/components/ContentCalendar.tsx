@@ -15,12 +15,13 @@ import {
   subMonths,
 } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import { mockPrefectures } from "@/data/mockData";
-import type { ContentItem, ContentStatus, ContentType } from "@/types";
+import type { ContentItem, ContentStatus, ContentType, CoveragePlan } from "@/types";
 import { cn } from "@/lib/utils";
 import { resolvePrefectureId } from "@/lib/location";
 import { useContentStore } from "@/lib/content-store";
+import { WheelPicker, type WheelPickerOption } from "@/components/WheelPicker";
 
 const typeBadgeStyle: Record<ContentType, string> = {
   article: "bg-azure text-ink",
@@ -50,11 +51,25 @@ const statusBadgeModifier: Record<ContentStatus, string> = {
   discarded: "opacity-40 border border-dashed border-ink/20",
 };
 
+const prefectureOptions: WheelPickerOption[] = [
+  { value: "all", label: "全部" },
+  ...mockPrefectures.map((prefecture) => ({ value: prefecture.id, label: prefecture.name })),
+];
+
+type DayEvent =
+  | { kind: "content"; id: string; item: ContentItem }
+  | { kind: "coverage"; id: string; plan: CoveragePlan; assignees: string[] };
+
 export function ContentCalendar() {
   const [month, setMonth] = useState(() => new Date());
   const [prefectureFilter, setPrefectureFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">("all");
-  const { contentItems } = useContentStore();
+  const { contentItems, coveragePlans, projects } = useContentStore();
+
+  const projectPrefectureMap = useMemo(
+    () => new Map(projects.map((project) => [project.id, project])),
+    [projects]
+  );
 
   const filteredItems = useMemo(() => {
     return contentItems.filter((item) => {
@@ -66,16 +81,30 @@ export function ContentCalendar() {
     });
   }, [contentItems, statusFilter, prefectureFilter]);
 
-  const itemsByDate = useMemo(() => {
-    const map = new Map<string, ContentItem[]>();
+  const filteredCoveragePlans = useMemo(() => {
+    return coveragePlans.filter((plan) => {
+      if (prefectureFilter === "all") return true;
+      return projectPrefectureMap.get(plan.projectId)?.prefectureId === prefectureFilter;
+    });
+  }, [coveragePlans, projectPrefectureMap, prefectureFilter]);
+
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, DayEvent[]>();
     for (const item of filteredItems) {
       if (!item.publishDate) continue;
       const list = map.get(item.publishDate) ?? [];
-      list.push(item);
+      list.push({ kind: "content", id: item.id, item });
       map.set(item.publishDate, list);
     }
+    for (const plan of filteredCoveragePlans) {
+      if (!plan.date) continue;
+      const assignees = projectPrefectureMap.get(plan.projectId)?.assignees ?? [];
+      const list = map.get(plan.date) ?? [];
+      list.push({ kind: "coverage", id: plan.id, plan, assignees });
+      map.set(plan.date, list);
+    }
     return map;
-  }, [filteredItems]);
+  }, [filteredItems, filteredCoveragePlans, projectPrefectureMap]);
 
   const monthStart = startOfMonth(month);
   const monthEnd = endOfMonth(month);
@@ -128,63 +157,44 @@ export function ContentCalendar() {
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-pink md:h-3 md:w-3" /> SNS
         </span>
+        <span className="flex items-center gap-1.5">
+          <Camera size={12} className="text-ink/60" /> 取材安排
+        </span>
       </div>
 
-      <div className="mb-4 flex flex-col gap-2 md:mb-6 md:gap-3">
-        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-          <span className="mr-1 self-center text-xs font-medium text-ink/50 md:text-sm">縣市</span>
-          <button
-            type="button"
-            onClick={() => setPrefectureFilter("all")}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-              prefectureFilter === "all" ? "bg-ink text-cream" : "bg-white/70 text-ink/60 hover:bg-ink/10"
-            )}
-          >
-            全部
-          </button>
-          {mockPrefectures.map((prefecture) => (
-            <button
-              key={prefecture.id}
-              type="button"
-              onClick={() => setPrefectureFilter(prefecture.id)}
-              className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-                prefectureFilter === prefecture.id
-                  ? "bg-ink text-cream"
-                  : "bg-white/70 text-ink/60 hover:bg-ink/10"
-              )}
-            >
-              {prefecture.name}
-            </button>
-          ))}
+      <div className="mb-4 flex flex-col items-center gap-4 md:mb-6 md:flex-row md:items-start md:justify-center md:gap-10">
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs font-medium text-ink/50 md:text-sm">縣市</span>
+          <WheelPicker options={prefectureOptions} value={prefectureFilter} onChange={setPrefectureFilter} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-          <span className="mr-1 self-center text-xs font-medium text-ink/50 md:text-sm">狀態</span>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("all")}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-              statusFilter === "all" ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
-            )}
-          >
-            全部
-          </button>
-          {(Object.keys(statusLabel) as ContentStatus[]).map((status) => (
+        <div className="flex flex-col items-center gap-1.5 md:items-start md:pt-6">
+          <span className="text-xs font-medium text-ink/50 md:text-sm">狀態（僅篩選內容上線）</span>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
             <button
-              key={status}
               type="button"
-              onClick={() => setStatusFilter(status)}
+              onClick={() => setStatusFilter("all")}
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
-                statusFilter === status ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
+                statusFilter === "all" ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
               )}
             >
-              {statusLabel[status]}
+              全部
             </button>
-          ))}
+            {(Object.keys(statusLabel) as ContentStatus[]).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setStatusFilter(status)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-xs font-medium transition-colors md:px-3 md:py-1.5 md:text-sm",
+                  statusFilter === status ? "bg-mint text-ink" : "bg-white/70 text-ink/60 hover:bg-ink/10"
+                )}
+              >
+                {statusLabel[status]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -198,9 +208,9 @@ export function ContentCalendar() {
 
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2 md:gap-3">
         {days.map((day) => {
-          const dayItems = itemsByDate.get(format(day, "yyyy-MM-dd")) ?? [];
-          const visibleItems = dayItems.slice(0, 3);
-          const extraCount = dayItems.length - visibleItems.length;
+          const dayEvents = eventsByDate.get(format(day, "yyyy-MM-dd")) ?? [];
+          const visibleEvents = dayEvents.slice(0, 3);
+          const extraCount = dayEvents.length - visibleEvents.length;
 
           return (
             <div
@@ -222,22 +232,36 @@ export function ContentCalendar() {
               </span>
 
               <div className="flex flex-col gap-1 md:gap-1.5">
-                {visibleItems.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`${typeLabel[item.type]} · ${statusLabel[item.status]} · ${item.title}`}
-                    className={cn(
-                      "truncate rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-tight md:px-2 md:py-1 md:text-xs",
-                      typeBadgeStyle[item.type],
-                      statusBadgeModifier[item.status]
-                    )}
-                  >
-                    {item.title}
-                  </a>
-                ))}
+                {visibleEvents.map((event) =>
+                  event.kind === "content" ? (
+                    <a
+                      key={event.id}
+                      href={event.item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`${typeLabel[event.item.type]} · ${statusLabel[event.item.status]} · ${event.item.title}`}
+                      className={cn(
+                        "truncate rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-tight md:px-2 md:py-1 md:text-xs",
+                        typeBadgeStyle[event.item.type],
+                        statusBadgeModifier[event.item.status]
+                      )}
+                    >
+                      {event.item.title}
+                    </a>
+                  ) : (
+                    <span
+                      key={event.id}
+                      title={`取材安排 · ${event.plan.spot}${event.assignees.length ? " · " + event.assignees.join("、") : ""}`}
+                      className="flex items-center gap-1 truncate rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-ink/70 md:px-2 md:py-1 md:text-xs"
+                    >
+                      <Camera size={10} className="shrink-0" />
+                      <span className="truncate">
+                        {event.plan.spot}
+                        {event.assignees.length > 0 ? `・${event.assignees.join("、")}` : ""}
+                      </span>
+                    </span>
+                  )
+                )}
                 {extraCount > 0 && (
                   <span className="px-1.5 text-[10px] font-medium text-ink/40 md:text-xs">
                     +{extraCount} 則

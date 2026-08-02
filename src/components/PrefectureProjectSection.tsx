@@ -146,7 +146,11 @@ function ProjectRow({ prefecture, project }: { prefecture: Prefecture; project: 
       </button>
       <button
         type="button"
-        onClick={() => removeProject(project.id)}
+        onClick={() => {
+          if (window.confirm(`確定要刪除「${project.name}」嗎？這會一併刪除其下所有內容規劃、進度月曆、取材安排與行程預算，無法復原。`)) {
+            removeProject(project.id);
+          }
+        }}
         aria-label="刪除專案"
         className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
       >

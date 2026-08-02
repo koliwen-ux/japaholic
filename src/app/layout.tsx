@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ItineraryProvider } from "@/lib/itinerary-store";
 import { ContentStoreProvider } from "@/lib/content-store";
 import { loadInitialState } from "@/lib/data/load-initial-state";
 import { Navbar } from "@/components/Navbar";
@@ -32,7 +31,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }>) {
-  const { contentItems, proposals, coveragePlans, stops, budgetItems } = await loadInitialState();
+  const { contentItems, coveragePlans, calendarProgress, projects } = await loadInitialState();
 
   return (
     <html
@@ -42,16 +41,15 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <ContentStoreProvider
           initialContentItems={contentItems}
-          initialProposals={proposals}
           initialCoveragePlans={coveragePlans}
+          initialCalendarProgress={calendarProgress}
+          initialProjects={projects}
         >
-          <ItineraryProvider initialStops={stops} initialBudgetItems={budgetItems}>
-            <Navbar />
-            <div className="flex flex-1">
-              <div className="min-w-0 flex-1">{children}</div>
-              {modal}
-            </div>
-          </ItineraryProvider>
+          <Navbar />
+          <div className="flex flex-1">
+            <div className="min-w-0 flex-1">{children}</div>
+            {modal}
+          </div>
         </ContentStoreProvider>
       </body>
     </html>

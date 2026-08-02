@@ -7,7 +7,7 @@ export async function createCoveragePlan(plan: Omit<CoveragePlan, "checklist">) 
   const supabase = getSupabaseServerClient();
   const { error } = await supabase.from("coverage_plans").insert({
     id: plan.id,
-    prefecture_id: plan.prefectureId,
+    project_id: plan.projectId,
     spot: plan.spot,
     date: plan.date || null,
     time: plan.time,
@@ -25,7 +25,7 @@ export async function updateCoveragePlan(
 ) {
   const supabase = getSupabaseServerClient();
   const row: Record<string, unknown> = {};
-  if (patch.prefectureId !== undefined) row.prefecture_id = patch.prefectureId;
+  if (patch.projectId !== undefined) row.project_id = patch.projectId;
   if (patch.spot !== undefined) row.spot = patch.spot;
   if (patch.date !== undefined) row.date = patch.date || null;
   if (patch.time !== undefined) row.time = patch.time;

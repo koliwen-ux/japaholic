@@ -7,6 +7,7 @@ export async function createBudgetItem(item: BudgetItem) {
   const supabase = getSupabaseServerClient();
   const { error } = await supabase.from("budget_items").insert({
     id: item.id,
+    project_id: item.projectId,
     category: item.category,
     amount: item.amount,
     note: item.note,

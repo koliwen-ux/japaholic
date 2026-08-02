@@ -14,10 +14,8 @@ import {
   subMonths,
 } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { Camera, Check, ChevronLeft, ChevronRight, Circle } from "lucide-react";
-import { mockCalendarProgress } from "@/data/mockData";
-import type { ContentType, Prefecture } from "@/types";
-import { resolvePrefectureId } from "@/lib/location";
+import { Camera, Check, ChevronLeft, ChevronRight, Circle, Plus, Trash2 } from "lucide-react";
+import type { ContentType, Prefecture, Project } from "@/types";
 import { useContentStore } from "@/lib/content-store";
 import { cn } from "@/lib/utils";
 
@@ -29,29 +27,86 @@ const typeDotColor: Record<ContentType, string> = {
 
 const weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"];
 
-export function PrefectureCalendarSection({ prefecture }: { prefecture: Prefecture }) {
+function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => void }) {
+  const { addCalendarTask } = useContentStore();
+  const [task, setTask] = useState("");
+  const [date, setDate] = useState("");
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!task.trim()) return;
+    addCalendarTask({ projectId, task: task.trim(), date });
+    onDone();
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-2 rounded-xl border border-dashed border-ink/20 bg-white/60 p-3 md:flex-row md:items-center md:gap-3"
+    >
+      <input
+        value={task}
+        onChange={(event) => setTask(event.target.value)}
+        placeholder="任務內容"
+        className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+      />
+      <input
+        type="date"
+        value={date}
+        onChange={(event) => setDate(event.target.value)}
+        className="rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+      />
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onDone}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink/60 hover:bg-ink/5 md:px-4 md:py-2 md:text-sm"
+        >
+          取消
+        </button>
+        <button
+          type="submit"
+          className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-ink hover:bg-mint/80 md:px-4 md:py-2 md:text-sm"
+        >
+          新增
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function PrefectureCalendarSection({ prefecture, project }: { prefecture: Prefecture; project: Project }) {
   const [month, setMonth] = useState(() => new Date());
-  const { contentItems: allContentItems, coveragePlans: allCoveragePlans } = useContentStore();
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const {
+    contentItems: allContentItems,
+    coveragePlans: allCoveragePlans,
+    calendarProgress,
+    updateCalendarTask,
+    toggleCalendarTask,
+    removeCalendarTask,
+  } = useContentStore();
 
   const contentItems = useMemo(
-    () => allContentItems.filter((item) => resolvePrefectureId(item.locationId) === prefecture.id),
-    [allContentItems, prefecture.id]
+    () => allContentItems.filter((item) => item.projectId === project.id),
+    [allContentItems, project.id]
   );
   const coveragePlans = useMemo(
-    () => allCoveragePlans.filter((plan) => plan.prefectureId === prefecture.id),
-    [allCoveragePlans, prefecture.id]
+    () => allCoveragePlans.filter((plan) => plan.projectId === project.id),
+    [allCoveragePlans, project.id]
   );
   const tasks = useMemo(
     () =>
-      mockCalendarProgress
-        .filter((task) => task.prefectureId === prefecture.id)
+      calendarProgress
+        .filter((task) => task.projectId === project.id)
         .sort((a, b) => a.date.localeCompare(b.date)),
-    [prefecture.id]
+    [calendarProgress, project.id]
   );
 
   const contentByDate = useMemo(() => {
     const map = new Map<string, ContentType[]>();
     for (const item of contentItems) {
+      if (!item.publishDate) continue;
       const list = map.get(item.publishDate) ?? [];
       list.push(item.type);
       map.set(item.publishDate, list);
@@ -161,19 +216,40 @@ export function PrefectureCalendarSection({ prefecture }: { prefecture: Prefectu
         })}
       </div>
 
-      {tasks.length > 0 && (
-        <div className="mt-6">
+      <div className="mt-6">
+        <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-ink/60 md:text-base">追蹤任務</h3>
+          <button
+            type="button"
+            onClick={() => setIsAddingTask((v) => !v)}
+            className="flex items-center gap-1 rounded-full bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/10 md:px-3 md:py-1.5 md:text-sm"
+          >
+            <Plus size={12} className="md:h-3.5 md:w-3.5" /> 新增任務
+          </button>
+        </div>
+
+        {isAddingTask && (
+          <div className="mt-2.5">
+            <AddTaskForm projectId={project.id} onDone={() => setIsAddingTask(false)} />
+          </div>
+        )}
+
+        {tasks.length === 0 ? (
+          <p className="mt-2.5 text-sm text-ink/40 md:text-base">目前尚無追蹤任務。</p>
+        ) : (
           <ul className="mt-2.5 flex flex-col gap-2">
             {tasks.map((task) => (
               <li
                 key={task.id}
                 className="flex items-center gap-3 rounded-xl bg-white/70 p-3 shadow-sm md:gap-4 md:p-4"
               >
-                <span
+                <button
+                  type="button"
+                  onClick={() => toggleCalendarTask(task.id)}
+                  aria-label={task.completed ? "標記為未完成" : "標記為完成"}
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full md:h-10 md:w-10",
-                    task.completed ? "bg-mint/50 text-ink" : "bg-ink/10 text-ink/40"
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors md:h-10 md:w-10",
+                    task.completed ? "bg-mint/50 text-ink" : "bg-ink/10 text-ink/40 hover:bg-ink/20"
                   )}
                 >
                   {task.completed ? (
@@ -181,23 +257,36 @@ export function PrefectureCalendarSection({ prefecture }: { prefecture: Prefectu
                   ) : (
                     <Circle size={14} className="md:h-4 md:w-4" />
                   )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p
+                </button>
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                  <input
+                    value={task.task}
+                    onChange={(event) => updateCalendarTask(task.id, { task: event.target.value })}
                     className={cn(
-                      "text-sm font-medium md:text-base",
+                      "min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base",
                       task.completed ? "text-ink/50 line-through" : "text-ink"
                     )}
-                  >
-                    {task.task}
-                  </p>
-                  <p className="text-xs text-ink/50 md:text-sm">{task.date}</p>
+                  />
+                  <input
+                    type="date"
+                    value={task.date}
+                    onChange={(event) => updateCalendarTask(task.id, { date: event.target.value })}
+                    className="shrink-0 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/50 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+                  />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => removeCalendarTask(task.id)}
+                  aria-label="刪除任務"
+                  className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+                >
+                  <Trash2 size={14} className="md:h-4 md:w-4" />
+                </button>
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

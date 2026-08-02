@@ -8,22 +8,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type {
-  ContentItem,
-  ContentProposal,
-  CoveragePlan,
-  CoveragePlanChecklistItem,
-} from "@/types";
+import type { CalendarProgress, ContentItem, CoveragePlan, CoveragePlanChecklistItem, Project } from "@/types";
 import {
   createContentItem,
   deleteContentItem,
   updateContentItem as updateContentItemAction,
 } from "@/lib/actions/content-items";
-import {
-  createProposal,
-  deleteProposal,
-  updateProposal as updateProposalAction,
-} from "@/lib/actions/content-proposals";
 import {
   createChecklistItem,
   createCoveragePlan,
@@ -32,26 +22,34 @@ import {
   toggleChecklistItem as toggleChecklistItemAction,
   updateCoveragePlan as updateCoveragePlanAction,
 } from "@/lib/actions/coverage-plans";
+import {
+  createCalendarTask,
+  deleteCalendarTask,
+  updateCalendarTask as updateCalendarTaskAction,
+} from "@/lib/actions/calendar-progress";
+import {
+  createProject,
+  deleteProject,
+  updateProject as updateProjectAction,
+} from "@/lib/actions/projects";
 
 type NewContentItemInput = Omit<ContentItem, "id">;
 type ContentItemPatch = Partial<Omit<ContentItem, "id">>;
 
-type NewProposalInput = Omit<ContentProposal, "id">;
-type ProposalPatch = Partial<Omit<ContentProposal, "id">>;
-
 type NewCoveragePlanInput = Omit<CoveragePlan, "id" | "checklist">;
 type CoveragePlanPatch = Partial<Omit<CoveragePlan, "id" | "checklist">>;
+
+type NewCalendarTaskInput = Omit<CalendarProgress, "id" | "completed">;
+type CalendarTaskPatch = Partial<Omit<CalendarProgress, "id">>;
+
+type NewProjectInput = Omit<Project, "id">;
+type ProjectPatch = Partial<Omit<Project, "id">>;
 
 interface ContentStoreValue {
   contentItems: ContentItem[];
   addContentItem: (input: NewContentItemInput) => void;
   updateContentItem: (id: string, patch: ContentItemPatch) => void;
   removeContentItem: (id: string) => void;
-
-  proposals: ContentProposal[];
-  addProposal: (input: NewProposalInput) => void;
-  updateProposal: (id: string, patch: ProposalPatch) => void;
-  removeProposal: (id: string) => void;
 
   coveragePlans: CoveragePlan[];
   addCoveragePlan: (input: NewCoveragePlanInput) => void;
@@ -60,6 +58,17 @@ interface ContentStoreValue {
   addChecklistItem: (planId: string, label: string) => void;
   toggleChecklistItem: (planId: string, itemId: string) => void;
   removeChecklistItem: (planId: string, itemId: string) => void;
+
+  calendarProgress: CalendarProgress[];
+  addCalendarTask: (input: NewCalendarTaskInput) => void;
+  updateCalendarTask: (id: string, patch: CalendarTaskPatch) => void;
+  toggleCalendarTask: (id: string) => void;
+  removeCalendarTask: (id: string) => void;
+
+  projects: Project[];
+  addProject: (input: NewProjectInput) => void;
+  updateProject: (id: string, patch: ProjectPatch) => void;
+  removeProject: (id: string) => void;
 }
 
 const ContentStoreContext = createContext<ContentStoreValue | null>(null);
@@ -72,18 +81,21 @@ function generateId(prefix: string) {
 
 export function ContentStoreProvider({
   initialContentItems,
-  initialProposals,
   initialCoveragePlans,
+  initialCalendarProgress,
+  initialProjects,
   children,
 }: {
   initialContentItems: ContentItem[];
-  initialProposals: ContentProposal[];
   initialCoveragePlans: CoveragePlan[];
+  initialCalendarProgress: CalendarProgress[];
+  initialProjects: Project[];
   children: ReactNode;
 }) {
   const [contentItems, setContentItems] = useState<ContentItem[]>(initialContentItems);
-  const [proposals, setProposals] = useState<ContentProposal[]>(initialProposals);
   const [coveragePlans, setCoveragePlans] = useState<CoveragePlan[]>(initialCoveragePlans);
+  const [calendarProgress, setCalendarProgress] = useState<CalendarProgress[]>(initialCalendarProgress);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
 
   const addContentItem = useCallback((input: NewContentItemInput) => {
     const item: ContentItem = { id: generateId("content"), ...input };
@@ -99,22 +111,6 @@ export function ContentStoreProvider({
   const removeContentItem = useCallback((id: string) => {
     setContentItems((prev) => prev.filter((item) => item.id !== id));
     void deleteContentItem(id);
-  }, []);
-
-  const addProposal = useCallback((input: NewProposalInput) => {
-    const proposal: ContentProposal = { id: generateId("proposal"), ...input };
-    setProposals((prev) => [...prev, proposal]);
-    void createProposal(proposal);
-  }, []);
-
-  const updateProposal = useCallback((id: string, patch: ProposalPatch) => {
-    setProposals((prev) => prev.map((proposal) => (proposal.id === id ? { ...proposal, ...patch } : proposal)));
-    void updateProposalAction(id, patch);
-  }, []);
-
-  const removeProposal = useCallback((id: string) => {
-    setProposals((prev) => prev.filter((proposal) => proposal.id !== id));
-    void deleteProposal(id);
   }, []);
 
   const addCoveragePlan = useCallback((input: NewCoveragePlanInput) => {
@@ -171,16 +167,56 @@ export function ContentStoreProvider({
     void deleteChecklistItem(itemId);
   }, []);
 
+  const addCalendarTask = useCallback((input: NewCalendarTaskInput) => {
+    const task: CalendarProgress = { id: generateId("cal"), completed: false, ...input };
+    setCalendarProgress((prev) => [...prev, task]);
+    void createCalendarTask(task);
+  }, []);
+
+  const updateCalendarTask = useCallback((id: string, patch: CalendarTaskPatch) => {
+    setCalendarProgress((prev) => prev.map((task) => (task.id === id ? { ...task, ...patch } : task)));
+    void updateCalendarTaskAction(id, patch);
+  }, []);
+
+  const toggleCalendarTask = useCallback((id: string) => {
+    let nextCompleted = false;
+    setCalendarProgress((prev) =>
+      prev.map((task) => {
+        if (task.id !== id) return task;
+        nextCompleted = !task.completed;
+        return { ...task, completed: nextCompleted };
+      })
+    );
+    void updateCalendarTaskAction(id, { completed: nextCompleted });
+  }, []);
+
+  const removeCalendarTask = useCallback((id: string) => {
+    setCalendarProgress((prev) => prev.filter((task) => task.id !== id));
+    void deleteCalendarTask(id);
+  }, []);
+
+  const addProject = useCallback((input: NewProjectInput) => {
+    const project: Project = { id: generateId("project"), ...input };
+    setProjects((prev) => [...prev, project]);
+    void createProject(project);
+  }, []);
+
+  const updateProject = useCallback((id: string, patch: ProjectPatch) => {
+    setProjects((prev) => prev.map((project) => (project.id === id ? { ...project, ...patch } : project)));
+    void updateProjectAction(id, patch);
+  }, []);
+
+  const removeProject = useCallback((id: string) => {
+    setProjects((prev) => prev.filter((project) => project.id !== id));
+    void deleteProject(id);
+  }, []);
+
   const value = useMemo(
     () => ({
       contentItems,
       addContentItem,
       updateContentItem,
       removeContentItem,
-      proposals,
-      addProposal,
-      updateProposal,
-      removeProposal,
       coveragePlans,
       addCoveragePlan,
       updateCoveragePlan,
@@ -188,16 +224,21 @@ export function ContentStoreProvider({
       addChecklistItem,
       toggleChecklistItem,
       removeChecklistItem,
+      calendarProgress,
+      addCalendarTask,
+      updateCalendarTask,
+      toggleCalendarTask,
+      removeCalendarTask,
+      projects,
+      addProject,
+      updateProject,
+      removeProject,
     }),
     [
       contentItems,
       addContentItem,
       updateContentItem,
       removeContentItem,
-      proposals,
-      addProposal,
-      updateProposal,
-      removeProposal,
       coveragePlans,
       addCoveragePlan,
       updateCoveragePlan,
@@ -205,6 +246,15 @@ export function ContentStoreProvider({
       addChecklistItem,
       toggleChecklistItem,
       removeChecklistItem,
+      calendarProgress,
+      addCalendarTask,
+      updateCalendarTask,
+      toggleCalendarTask,
+      removeCalendarTask,
+      projects,
+      addProject,
+      updateProject,
+      removeProject,
     ]
   );
 

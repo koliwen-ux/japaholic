@@ -1,34 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CalendarCheck2, ClipboardList, Compass, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Compass, X } from "lucide-react";
 import type { Prefecture } from "@/types";
 import { iconMap } from "@/lib/icons";
-import { PrefectureContentSection } from "@/components/PrefectureContentSection";
-import { PrefectureCalendarSection } from "@/components/PrefectureCalendarSection";
-import { PrefectureCoverageAccordion } from "@/components/PrefectureCoverageAccordion";
-
-function SectionHeading({
-  icon: Icon,
-  title,
-  color,
-}: {
-  icon: typeof ClipboardList;
-  title: string;
-  color: string;
-}) {
-  return (
-    <div className="mb-4 flex items-center gap-2.5 md:mb-5">
-      <span
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-ink md:h-10 md:w-10"
-        style={{ backgroundColor: `${color}33` }}
-      >
-        <Icon size={18} className="md:h-5 md:w-5" />
-      </span>
-      <h2 className="text-lg font-black text-ink md:text-xl">{title}</h2>
-    </div>
-  );
-}
+import { PrefectureProjectSection } from "@/components/PrefectureProjectSection";
+import { SectionHeading } from "@/components/SectionHeading";
 
 export function PrefectureDetail({
   prefecture,
@@ -71,25 +48,13 @@ export function PrefectureDetail({
         </span>
         <div>
           <h1 className="text-2xl font-black text-ink md:text-3xl">{prefecture.name}</h1>
-          <p className="text-sm text-ink/50 md:text-base">內容規劃・進度月曆・取材安排</p>
+          <p className="text-sm text-ink/50 md:text-base">取材專案</p>
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-8 md:mt-10 md:gap-10">
-        <section>
-          <SectionHeading icon={ClipboardList} title="內容規劃" color={prefecture.color} />
-          <PrefectureContentSection prefecture={prefecture} />
-        </section>
-
-        <section>
-          <SectionHeading icon={CalendarCheck2} title="進度月曆" color={prefecture.color} />
-          <PrefectureCalendarSection prefecture={prefecture} />
-        </section>
-
-        <section>
-          <SectionHeading icon={Compass} title="取材安排" color={prefecture.color} />
-          <PrefectureCoverageAccordion prefecture={prefecture} />
-        </section>
+      <div className="mt-8 md:mt-10">
+        <SectionHeading icon={Briefcase} title="取材專案" color={prefecture.color} />
+        <PrefectureProjectSection prefecture={prefecture} />
       </div>
     </div>
   );

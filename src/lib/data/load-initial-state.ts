@@ -1,27 +1,19 @@
 import "server-only";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  BudgetItem,
-  ContentItem,
-  ContentProposal,
-  CoveragePlan,
-  ItineraryStop,
-} from "@/types";
+import type { CalendarProgress, ContentItem, CoveragePlan, Project } from "@/types";
 
 export interface InitialState {
   contentItems: ContentItem[];
-  proposals: ContentProposal[];
   coveragePlans: CoveragePlan[];
-  stops: ItineraryStop[];
-  budgetItems: BudgetItem[];
+  calendarProgress: CalendarProgress[];
+  projects: Project[];
 }
 
 const empty: InitialState = {
   contentItems: [],
-  proposals: [],
   coveragePlans: [],
-  stops: [],
-  budgetItems: [],
+  calendarProgress: [],
+  projects: [],
 };
 
 export async function loadInitialState(): Promise<InitialState> {
@@ -33,49 +25,44 @@ export async function loadInitialState(): Promise<InitialState> {
 
   const supabase = getSupabaseServerClient();
 
-  const [contentItemsRes, proposalsRes, coveragePlansRes, checklistRes, stopsRes, budgetRes] =
+  const [contentItemsRes, coveragePlansRes, checklistRes, calendarProgressRes, projectsRes] =
     await Promise.all([
       supabase.from("content_items").select("*"),
-      supabase.from("content_proposals").select("*"),
       supabase.from("coverage_plans").select("*").order("date", { ascending: true }),
       supabase.from("coverage_checklist_items").select("*"),
-      supabase.from("itinerary_stops").select("*").order("day").order("position"),
-      supabase.from("budget_items").select("*"),
+      supabase.from("calendar_progress").select("*").order("date", { ascending: true }),
+      supabase.from("projects").select("*"),
     ]);
 
   for (const [label, res] of [
     ["content_items", contentItemsRes],
-    ["content_proposals", proposalsRes],
     ["coverage_plans", coveragePlansRes],
     ["coverage_checklist_items", checklistRes],
-    ["itinerary_stops", stopsRes],
-    ["budget_items", budgetRes],
+    ["calendar_progress", calendarProgressRes],
+    ["projects", projectsRes],
   ] as const) {
     if (res.error) console.error(`loadInitialState: ${label} failed`, res.error);
   }
 
   const contentItems: ContentItem[] = (contentItemsRes.data ?? []).map((row) => ({
     id: row.id,
+    projectId: row.project_id,
     type: row.type,
     title: row.title,
-    url: row.url,
-    publishDate: row.publish_date ?? "",
     status: row.status,
     locationId: row.location_id,
-  }));
-
-  const proposals: ContentProposal[] = (proposalsRes.data ?? []).map((row) => ({
-    id: row.id,
-    type: row.type,
-    prefectureId: row.prefecture_id,
-    relatedPrefectureIds: row.related_prefecture_ids?.length ? row.related_prefecture_ids : undefined,
-    title: row.title,
-    summary: row.summary,
+    url: row.url || undefined,
+    publishDate: row.publish_date ?? undefined,
+    draftDueDate: row.draft_due_date ?? undefined,
+    summary: row.summary || undefined,
     outline: row.outline?.length ? row.outline : undefined,
-    keywords: { primary: row.keywords_primary ?? [], secondary: row.keywords_secondary ?? [] },
+    keywords:
+      row.keywords_primary?.length || row.keywords_secondary?.length
+        ? { primary: row.keywords_primary ?? [], secondary: row.keywords_secondary ?? [] }
+        : undefined,
     titleAlternatives: row.title_alternatives?.length ? row.title_alternatives : undefined,
     format: row.format ?? undefined,
-    status: row.status,
+    relatedPrefectureIds: row.related_prefecture_ids?.length ? row.related_prefecture_ids : undefined,
   }));
 
   const checklistByPlan = new Map<string, CoveragePlan["checklist"]>();
@@ -87,7 +74,7 @@ export async function loadInitialState(): Promise<InitialState> {
 
   const coveragePlans: CoveragePlan[] = (coveragePlansRes.data ?? []).map((row) => ({
     id: row.id,
-    prefectureId: row.prefecture_id,
+    projectId: row.project_id,
     spot: row.spot,
     date: row.date ?? "",
     time: row.time,
@@ -98,22 +85,21 @@ export async function loadInitialState(): Promise<InitialState> {
     checklist: checklistByPlan.get(row.id) ?? [],
   }));
 
-  const stops: ItineraryStop[] = (stopsRes.data ?? []).map((row) => ({
+  const calendarProgress: CalendarProgress[] = (calendarProgressRes.data ?? []).map((row) => ({
     id: row.id,
-    day: row.day,
-    spotName: row.spot_name,
-    note: row.note,
-    locationId: row.location_id,
-    transport: row.transport ?? undefined,
-    contentFocus: row.content_focus ?? undefined,
+    projectId: row.project_id,
+    date: row.date ?? "",
+    task: row.task,
+    completed: row.completed,
   }));
 
-  const budgetItems: BudgetItem[] = (budgetRes.data ?? []).map((row) => ({
+  const projects: Project[] = (projectsRes.data ?? []).map((row) => ({
     id: row.id,
-    category: row.category,
-    amount: row.amount,
-    note: row.note,
+    prefectureId: row.prefecture_id,
+    name: row.name,
+    assignees: row.assignees ?? [],
+    notes: row.notes || undefined,
   }));
 
-  return { contentItems, proposals, coveragePlans, stops, budgetItems };
+  return { contentItems, coveragePlans, calendarProgress, projects };
 }

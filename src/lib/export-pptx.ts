@@ -1,13 +1,13 @@
-import type { BudgetItem, ContentProposal, ItineraryStop } from "@/types";
+import type { BudgetItem, ContentItem, ItineraryStop } from "@/types";
 import { locationLabel } from "@/lib/location";
 
 interface BuildTripPptxInput {
   tripTitle: string;
-  days: number[];
+  dates: string[];
   stops: ItineraryStop[];
   budgetItems: BudgetItem[];
   budgetTotal: number;
-  proposals: ContentProposal[];
+  contentItems: ContentItem[];
 }
 
 /** pptxgenjs table cell shape: `{ text, options }`. */
@@ -22,17 +22,17 @@ function headerCell(text: string) {
 const TABLE_BORDER = { type: "solid" as const, color: "DDDDDD", pt: 0.5 };
 
 /**
- * Rebuilds the trip's planning data (itinerary, budget, content proposals) into a
+ * Rebuilds the trip's planning data (itinerary, budget, content items) into a
  * downloadable .pptx, mirroring the structure of the pre-trip planning deck this
  * data was originally transcribed from. Runs entirely client-side.
  */
 export async function buildTripPptx({
   tripTitle,
-  days,
+  dates,
   stops,
   budgetItems,
   budgetTotal,
-  proposals,
+  contentItems,
 }: BuildTripPptxInput) {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
@@ -54,12 +54,12 @@ export async function buildTripPptx({
   if (stops.length > 0) {
     const slide = pptx.addSlide();
     slide.addText("行程參考", { x: 0.4, y: 0.3, fontSize: 22, bold: true });
-    const rows = [[headerCell("Day"), headerCell("景點"), headerCell("交通方式"), headerCell("內容重點")]];
-    for (const day of days) {
-      const dayStops = stops.filter((stop) => stop.day === day);
-      for (const stop of dayStops) {
+    const rows = [[headerCell("日期"), headerCell("景點"), headerCell("交通方式"), headerCell("內容重點")]];
+    for (const date of dates) {
+      const dateStops = stops.filter((stop) => stop.date === date);
+      for (const stop of dateStops) {
         rows.push([
-          cell(`Day ${day}`),
+          cell(date),
           cell(`${stop.spotName}\n${locationLabel(stop.locationId)}`),
           cell(stop.transport ?? ""),
           cell(stop.contentFocus ?? ""),
@@ -103,17 +103,17 @@ export async function buildTripPptx({
     });
   }
 
-  const articleProposals = proposals.filter((proposal) => proposal.type === "article");
-  if (articleProposals.length > 0) {
+  const articleItems = contentItems.filter((item) => item.type === "article");
+  if (articleItems.length > 0) {
     const slide = pptx.addSlide();
     slide.addText("文章企劃", { x: 0.4, y: 0.3, fontSize: 22, bold: true });
     const rows = [[headerCell("標題"), headerCell("大綱"), headerCell("主要關鍵字"), headerCell("次要關鍵字")]];
-    for (const proposal of articleProposals) {
+    for (const item of articleItems) {
       rows.push([
-        cell(proposal.title, { fontSize: 9 }),
-        cell((proposal.outline ?? []).join("\n"), { fontSize: 8 }),
-        cell(proposal.keywords.primary.join("、"), { fontSize: 8 }),
-        cell(proposal.keywords.secondary.join("、"), { fontSize: 8 }),
+        cell(item.title, { fontSize: 9 }),
+        cell((item.outline ?? []).join("\n"), { fontSize: 8 }),
+        cell((item.keywords?.primary ?? []).join("、"), { fontSize: 8 }),
+        cell((item.keywords?.secondary ?? []).join("、"), { fontSize: 8 }),
       ]);
     }
     slide.addTable(rows, {
@@ -128,13 +128,13 @@ export async function buildTripPptx({
     });
   }
 
-  const snsProposals = proposals.filter((proposal) => proposal.type === "sns");
-  if (snsProposals.length > 0) {
+  const snsItems = contentItems.filter((item) => item.type === "sns");
+  if (snsItems.length > 0) {
     const slide = pptx.addSlide();
     slide.addText("SNS 內容企劃", { x: 0.4, y: 0.3, fontSize: 22, bold: true });
     const rows = [[headerCell("格式"), headerCell("主題"), headerCell("說明")]];
-    for (const proposal of snsProposals) {
-      rows.push([cell(proposal.format ?? ""), cell(proposal.title), cell(proposal.summary)]);
+    for (const item of snsItems) {
+      rows.push([cell(item.format ?? ""), cell(item.title), cell(item.summary ?? "")]);
     }
     slide.addTable(rows, {
       x: 0.4,
@@ -148,15 +148,15 @@ export async function buildTripPptx({
     });
   }
 
-  const youtubeProposals = proposals.filter((proposal) => proposal.type === "youtube");
-  if (youtubeProposals.length > 0) {
+  const youtubeItems = contentItems.filter((item) => item.type === "youtube");
+  if (youtubeItems.length > 0) {
     const slide = pptx.addSlide();
     slide.addText("YouTube 企劃", { x: 0.4, y: 0.3, fontSize: 22, bold: true });
     const rows = [[headerCell("影片架構"), headerCell("標題備案")]];
-    for (const proposal of youtubeProposals) {
+    for (const item of youtubeItems) {
       rows.push([
-        cell((proposal.outline ?? []).join("\n"), { fontSize: 9 }),
-        cell((proposal.titleAlternatives ?? [proposal.title]).join("\n\n"), { fontSize: 9 }),
+        cell((item.outline ?? []).join("\n"), { fontSize: 9 }),
+        cell((item.titleAlternatives ?? [item.title]).join("\n\n"), { fontSize: 9 }),
       ]);
     }
     slide.addTable(rows, {

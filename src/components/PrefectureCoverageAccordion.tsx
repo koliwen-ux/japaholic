@@ -14,7 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
-import type { CoveragePlan, CoveragePlanChecklistItem, CoveragePlanStatus, Prefecture } from "@/types";
+import type { CoveragePlan, CoveragePlanChecklistItem, CoveragePlanStatus, Prefecture, Project } from "@/types";
 import { cn } from "@/lib/utils";
 
 const statusStyle: Record<CoveragePlanStatus, string> = {
@@ -360,13 +360,13 @@ function CoverageAccordionItem({
   );
 }
 
-export function PrefectureCoverageAccordion({ prefecture }: { prefecture: Prefecture }) {
+export function PrefectureCoverageAccordion({ prefecture, project }: { prefecture: Prefecture; project: Project }) {
   const { coveragePlans, addCoveragePlan } = useContentStore();
   const [openId, setOpenId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   const plans = coveragePlans
-    .filter((plan) => plan.prefectureId === prefecture.id)
+    .filter((plan) => plan.projectId === project.id)
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
@@ -389,7 +389,7 @@ export function PrefectureCoverageAccordion({ prefecture }: { prefecture: Prefec
             onCancel={() => setIsAdding(false)}
             onSubmit={(value) => {
               addCoveragePlan({
-                prefectureId: prefecture.id,
+                projectId: project.id,
                 spot: value.spot.trim(),
                 date: value.date,
                 time: value.time.trim(),

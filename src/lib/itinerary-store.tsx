@@ -24,12 +24,14 @@ import {
 } from "@/lib/actions/budget";
 
 interface AddStopInput {
-  day: number;
+  date: string;
   spotName: string;
   note: string;
   locationId: string;
   transport?: string;
   contentFocus?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 interface AddBudgetItemInput {
@@ -38,17 +40,19 @@ interface AddBudgetItemInput {
   note: string;
 }
 
-type StopPatch = Partial<Pick<ItineraryStop, "spotName" | "note" | "day" | "transport" | "contentFocus">>;
+type StopPatch = Partial<
+  Pick<ItineraryStop, "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime">
+>;
 type BudgetItemPatch = Partial<Pick<BudgetItem, "category" | "amount" | "note">>;
 
 interface ItineraryContextValue {
   stops: ItineraryStop[];
-  days: number[];
+  dates: string[];
   addStop: (input: AddStopInput) => void;
   removeStop: (id: string) => void;
   updateStop: (id: string, patch: StopPatch) => void;
-  reorderDay: (day: number, orderedIds: string[]) => void;
-  addDay: () => void;
+  reorderDate: (date: string, orderedIds: string[]) => void;
+  addDate: (date: string) => void;
   stopsForLocation: (locationId: string) => ItineraryStop[];
   budgetItems: BudgetItem[];
   addBudgetItem: (input: AddBudgetItemInput) => void;
@@ -71,18 +75,21 @@ function generateBudgetId() {
   return `budget-${Date.now()}-${budgetIdCounter}`;
 }
 
+/** Scoped to a single `Project` — instantiate one per project page, not app-wide. */
 export function ItineraryProvider({
+  projectId,
   initialStops,
   initialBudgetItems,
   children,
 }: {
+  projectId: string;
   initialStops: ItineraryStop[];
   initialBudgetItems: BudgetItem[];
   children: ReactNode;
 }) {
   const [stops, setStops] = useState<ItineraryStop[]>(initialStops);
-  const initialDays = Array.from(new Set(initialStops.map((stop) => stop.day))).sort((a, b) => a - b);
-  const [days, setDays] = useState<number[]>(initialDays.length ? initialDays : [1]);
+  const initialDates = Array.from(new Set(initialStops.map((stop) => stop.date))).sort();
+  const [dates, setDates] = useState<string[]>(initialDates);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(initialBudgetItems);
 
   const stopPatcher = useRef(
@@ -92,16 +99,19 @@ export function ItineraryProvider({
     createDebouncedPatcher<BudgetItem>(600, (id, patch) => void updateBudgetItemAction(id, patch))
   ).current;
 
-  const addStop = useCallback((input: AddStopInput) => {
-    setDays((prev) => (prev.includes(input.day) ? prev : [...prev, input.day].sort((a, b) => a - b)));
-    const stop: ItineraryStop = { id: generateStopId(), ...input };
-    let position = 0;
-    setStops((prev) => {
-      position = prev.filter((s) => s.day === input.day).length;
-      return [...prev, stop];
-    });
-    void createStop(stop, position);
-  }, []);
+  const addStop = useCallback(
+    (input: AddStopInput) => {
+      setDates((prev) => (prev.includes(input.date) ? prev : [...prev, input.date].sort()));
+      const stop: ItineraryStop = { id: generateStopId(), projectId, ...input };
+      let position = 0;
+      setStops((prev) => {
+        position = prev.filter((s) => s.date === input.date).length;
+        return [...prev, stop];
+      });
+      void createStop(stop, position);
+    },
+    [projectId]
+  );
 
   const removeStop = useCallback((id: string) => {
     setStops((prev) => prev.filter((stop) => stop.id !== id));
@@ -111,17 +121,17 @@ export function ItineraryProvider({
   const updateStop = useCallback(
     (id: string, patch: StopPatch) => {
       setStops((prev) => prev.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop)));
-      if (patch.day !== undefined) {
-        setDays((prev) => (prev.includes(patch.day!) ? prev : [...prev, patch.day!].sort((a, b) => a - b)));
+      if (patch.date !== undefined) {
+        setDates((prev) => (prev.includes(patch.date!) ? prev : [...prev, patch.date!].sort()));
       }
       stopPatcher.schedule(id, patch);
     },
     [stopPatcher]
   );
 
-  const reorderDay = useCallback((day: number, orderedIds: string[]) => {
+  const reorderDate = useCallback((date: string, orderedIds: string[]) => {
     setStops((prev) => {
-      const others = prev.filter((stop) => stop.day !== day);
+      const others = prev.filter((stop) => stop.date !== date);
       const reordered = orderedIds
         .map((id) => prev.find((stop) => stop.id === id))
         .filter((stop): stop is ItineraryStop => Boolean(stop));
@@ -130,8 +140,8 @@ export function ItineraryProvider({
     void reorderStops(orderedIds);
   }, []);
 
-  const addDay = useCallback(() => {
-    setDays((prev) => [...prev, (prev.length ? Math.max(...prev) : 0) + 1]);
+  const addDate = useCallback((date: string) => {
+    setDates((prev) => (prev.includes(date) ? prev : [...prev, date].sort()));
   }, []);
 
   const stopsForLocation = useCallback(
@@ -139,11 +149,14 @@ export function ItineraryProvider({
     [stops]
   );
 
-  const addBudgetItem = useCallback((input: AddBudgetItemInput) => {
-    const item: BudgetItem = { id: generateBudgetId(), ...input };
-    setBudgetItems((prev) => [...prev, item]);
-    void createBudgetItem(item);
-  }, []);
+  const addBudgetItem = useCallback(
+    (input: AddBudgetItemInput) => {
+      const item: BudgetItem = { id: generateBudgetId(), projectId, ...input };
+      setBudgetItems((prev) => [...prev, item]);
+      void createBudgetItem(item);
+    },
+    [projectId]
+  );
 
   const removeBudgetItem = useCallback((id: string) => {
     setBudgetItems((prev) => prev.filter((item) => item.id !== id));
@@ -166,12 +179,12 @@ export function ItineraryProvider({
   const value = useMemo(
     () => ({
       stops,
-      days,
+      dates,
       addStop,
       removeStop,
       updateStop,
-      reorderDay,
-      addDay,
+      reorderDate,
+      addDate,
       stopsForLocation,
       budgetItems,
       addBudgetItem,
@@ -181,12 +194,12 @@ export function ItineraryProvider({
     }),
     [
       stops,
-      days,
+      dates,
       addStop,
       removeStop,
       updateStop,
-      reorderDay,
-      addDay,
+      reorderDate,
+      addDate,
       stopsForLocation,
       budgetItems,
       addBudgetItem,

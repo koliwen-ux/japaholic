@@ -35,15 +35,19 @@ const typeLabel: Record<ContentType, string> = {
 };
 
 const statusLabel: Record<ContentStatus, string> = {
+  candidate: "待定",
   draft: "草稿",
   scheduled: "已排程",
   published: "已上線",
+  discarded: "已捨棄",
 };
 
 const statusBadgeModifier: Record<ContentStatus, string> = {
+  candidate: "opacity-60 border border-dashed border-ink/40",
   draft: "opacity-60 border border-dashed border-ink/40",
   scheduled: "border border-white/60",
   published: "border border-white shadow-sm",
+  discarded: "opacity-40 border border-dashed border-ink/20",
 };
 
 export function ContentCalendar() {
@@ -65,6 +69,7 @@ export function ContentCalendar() {
   const itemsByDate = useMemo(() => {
     const map = new Map<string, ContentItem[]>();
     for (const item of filteredItems) {
+      if (!item.publishDate) continue;
       const list = map.get(item.publishDate) ?? [];
       list.push(item);
       map.set(item.publishDate, list);

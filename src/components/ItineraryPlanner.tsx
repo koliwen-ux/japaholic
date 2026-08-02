@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Reorder } from "framer-motion";
+import { addDays, format, parseISO } from "date-fns";
+import { zhTW } from "date-fns/locale";
 import { GripVertical, MapPin, Plus, Presentation, Trash2 } from "lucide-react";
-import { mockItineraries, mockLocations } from "@/data/mockData";
+import { mockLocations } from "@/data/mockData";
 import { useItinerary } from "@/lib/itinerary-store";
 import { useContentStore } from "@/lib/content-store";
 import { iconMap } from "@/lib/icons";
@@ -11,12 +13,20 @@ import { buildTripPptx } from "@/lib/export-pptx";
 import type { ItineraryStop } from "@/types";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
 
-const tripTitle = mockItineraries[0]?.title ?? "東北取材行程規劃";
+function formatDateHeading(date: string) {
+  try {
+    return format(parseISO(date), "M月d日（EEEEEE）", { locale: zhTW });
+  } catch {
+    return date;
+  }
+}
 
-function AddStopForm({ day, onDone }: { day: number; onDone: () => void }) {
+function AddStopForm({ date, onDone }: { date: string; onDone: () => void }) {
   const { addStop } = useItinerary();
   const [locationId, setLocationId] = useState(mockLocations[0]?.id ?? "");
   const [spotName, setSpotName] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [transport, setTransport] = useState("");
   const [contentFocus, setContentFocus] = useState("");
   const [note, setNote] = useState("");
@@ -25,12 +35,14 @@ function AddStopForm({ day, onDone }: { day: number; onDone: () => void }) {
     event.preventDefault();
     if (!spotName.trim() || !locationId) return;
     addStop({
-      day,
+      date,
       spotName: spotName.trim(),
       note: note.trim(),
       locationId,
       transport: transport.trim() || undefined,
       contentFocus: contentFocus.trim() || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
     });
     onDone();
   };
@@ -73,6 +85,22 @@ function AddStopForm({ day, onDone }: { day: number; onDone: () => void }) {
           className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
         />
       </div>
+      <div className="flex gap-2 md:gap-3">
+        <input
+          type="time"
+          value={startTime}
+          onChange={(event) => setStartTime(event.target.value)}
+          placeholder="開始時間"
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        />
+        <input
+          type="time"
+          value={endTime}
+          onChange={(event) => setEndTime(event.target.value)}
+          placeholder="結束時間"
+          className="flex-1 rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+        />
+      </div>
       <textarea
         value={note}
         onChange={(event) => setNote(event.target.value)}
@@ -99,7 +127,7 @@ function AddStopForm({ day, onDone }: { day: number; onDone: () => void }) {
   );
 }
 
-function StopCard({ stop, days }: { stop: ItineraryStop; days: number[] }) {
+function StopCard({ stop }: { stop: ItineraryStop }) {
   const { updateStop, removeStop } = useItinerary();
   const location = mockLocations.find((item) => item.id === stop.locationId);
   const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
@@ -136,6 +164,20 @@ function StopCard({ stop, days }: { stop: ItineraryStop; days: number[] }) {
             className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
           />
         </div>
+        <div className="flex gap-1.5">
+          <input
+            type="time"
+            value={stop.startTime ?? ""}
+            onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
+            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          />
+          <input
+            type="time"
+            value={stop.endTime ?? ""}
+            onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
+            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          />
+        </div>
         <textarea
           value={stop.note}
           onChange={(event) => updateStop(stop.id, { note: event.target.value })}
@@ -145,17 +187,12 @@ function StopCard({ stop, days }: { stop: ItineraryStop; days: number[] }) {
         />
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1.5 print:hidden">
-        <select
-          value={stop.day}
-          onChange={(event) => updateStop(stop.id, { day: Number(event.target.value) })}
+        <input
+          type="date"
+          value={stop.date}
+          onChange={(event) => updateStop(stop.id, { date: event.target.value })}
           className="rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
-        >
-          {days.map((d) => (
-            <option key={d} value={d}>
-              Day {d}
-            </option>
-          ))}
-        </select>
+        />
         <button
           type="button"
           onClick={() => removeStop(stop.id)}
@@ -169,16 +206,16 @@ function StopCard({ stop, days }: { stop: ItineraryStop; days: number[] }) {
   );
 }
 
-function DaySection({ day }: { day: number }) {
-  const { stops, days, reorderDay } = useItinerary();
+function DateSection({ date }: { date: string }) {
+  const { stops, reorderDate } = useItinerary();
   const [isAdding, setIsAdding] = useState(false);
-  const dayStops = useMemo(() => stops.filter((stop) => stop.day === day), [stops, day]);
-  const dayStopIds = useMemo(() => dayStops.map((stop) => stop.id), [dayStops]);
+  const dateStops = useMemo(() => stops.filter((stop) => stop.date === date), [stops, date]);
+  const dateStopIds = useMemo(() => dateStops.map((stop) => stop.id), [dateStops]);
 
   return (
     <section className="rounded-2xl bg-white/50 p-4 shadow-sm md:p-5">
       <div className="mb-3 flex items-center justify-between md:mb-4">
-        <h3 className="text-base font-bold text-ink md:text-lg">Day {day}</h3>
+        <h3 className="text-base font-bold text-ink md:text-lg">{formatDateHeading(date)}</h3>
         <button
           type="button"
           onClick={() => setIsAdding((v) => !v)}
@@ -190,21 +227,21 @@ function DaySection({ day }: { day: number }) {
 
       {isAdding && (
         <div className="mb-3">
-          <AddStopForm day={day} onDone={() => setIsAdding(false)} />
+          <AddStopForm date={date} onDone={() => setIsAdding(false)} />
         </div>
       )}
 
-      {dayStops.length === 0 ? (
+      {dateStops.length === 0 ? (
         <p className="text-sm text-ink/40 md:text-base">尚無景點，從地圖點選縣市加入，或點擊「新增景點」。</p>
       ) : (
         <Reorder.Group
           axis="y"
-          values={dayStopIds}
-          onReorder={(newOrder) => reorderDay(day, newOrder as string[])}
+          values={dateStopIds}
+          onReorder={(newOrder) => reorderDate(date, newOrder as string[])}
           className="flex flex-col gap-2 md:gap-3"
         >
-          {dayStops.map((stop) => (
-            <StopCard key={stop.id} stop={stop} days={days} />
+          {dateStops.map((stop) => (
+            <StopCard key={stop.id} stop={stop} />
           ))}
         </Reorder.Group>
       )}
@@ -212,21 +249,71 @@ function DaySection({ day }: { day: number }) {
   );
 }
 
-export function ItineraryPlanner() {
-  const { days, stops, addDay, budgetItems, budgetTotal } = useItinerary();
-  const { proposals } = useContentStore();
+function AddDateForm({ onDone }: { onDone: () => void }) {
+  const { dates, addDate } = useItinerary();
+  const defaultDate = dates.length
+    ? format(addDays(parseISO(dates[dates.length - 1]), 1), "yyyy-MM-dd")
+    : format(new Date(), "yyyy-MM-dd");
+  const [date, setDate] = useState(defaultDate);
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!date) return;
+    addDate(date);
+    onDone();
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-ink/20 bg-white/60 p-3 md:gap-3"
+    >
+      <input
+        type="date"
+        value={date}
+        onChange={(event) => setDate(event.target.value)}
+        className="rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-sm text-ink md:px-3 md:py-2 md:text-base"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onDone}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-ink/60 hover:bg-ink/5 md:px-4 md:py-2 md:text-sm"
+        >
+          取消
+        </button>
+        <button
+          type="submit"
+          className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-ink hover:bg-mint/80 md:px-4 md:py-2 md:text-sm"
+        >
+          新增日期
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function ItineraryPlanner({ title, projectId }: { title: string; projectId: string }) {
+  const { dates, stops, budgetItems, budgetTotal } = useItinerary();
+  const { contentItems: allContentItems } = useContentStore();
   const [isExportingPptx, setIsExportingPptx] = useState(false);
+  const [isAddingDate, setIsAddingDate] = useState(false);
+
+  const contentItems = useMemo(
+    () => allContentItems.filter((item) => item.projectId === projectId),
+    [allContentItems, projectId]
+  );
 
   const handleExportPptx = async () => {
     setIsExportingPptx(true);
     try {
       await buildTripPptx({
-        tripTitle,
-        days,
+        tripTitle: title,
+        dates,
         stops,
         budgetItems,
         budgetTotal,
-        proposals,
+        contentItems,
       });
     } finally {
       setIsExportingPptx(false);
@@ -240,10 +327,10 @@ export function ItineraryPlanner() {
         <div className="flex flex-wrap gap-2 print:hidden md:gap-3">
           <button
             type="button"
-            onClick={addDay}
+            onClick={() => setIsAddingDate((v) => !v)}
             className="flex items-center gap-1.5 rounded-full bg-mint px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-mint/80 md:px-4 md:py-2 md:text-sm"
           >
-            <Plus size={14} className="md:h-4 md:w-4" /> 新增天數
+            <Plus size={14} className="md:h-4 md:w-4" /> 新增日期
           </button>
           <button
             type="button"
@@ -257,9 +344,13 @@ export function ItineraryPlanner() {
       </div>
 
       <div className="flex flex-col gap-4 md:gap-5">
-        {days.map((day) => (
-          <DaySection key={day} day={day} />
-        ))}
+        {isAddingDate && <AddDateForm onDone={() => setIsAddingDate(false)} />}
+
+        {dates.length === 0 ? (
+          <p className="text-sm text-ink/40 md:text-base">尚無日期，點擊「新增日期」開始安排行程。</p>
+        ) : (
+          dates.map((date) => <DateSection key={date} date={date} />)
+        )}
         <BudgetPlanner />
       </div>
     </div>

@@ -7,28 +7,35 @@ export async function createStop(stop: ItineraryStop, position: number) {
   const supabase = getSupabaseServerClient();
   const { error } = await supabase.from("itinerary_stops").insert({
     id: stop.id,
-    day: stop.day,
+    project_id: stop.projectId,
+    date: stop.date,
     position,
     spot_name: stop.spotName,
     note: stop.note,
     location_id: stop.locationId,
     transport: stop.transport ?? null,
     content_focus: stop.contentFocus ?? null,
+    start_time: stop.startTime ?? null,
+    end_time: stop.endTime ?? null,
   });
   if (error) console.error("createStop failed", error);
 }
 
 export async function updateStop(
   id: string,
-  patch: Partial<Pick<ItineraryStop, "spotName" | "note" | "day" | "transport" | "contentFocus">>
+  patch: Partial<
+    Pick<ItineraryStop, "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime">
+  >
 ) {
   const supabase = getSupabaseServerClient();
   const row: Record<string, unknown> = {};
   if (patch.spotName !== undefined) row.spot_name = patch.spotName;
   if (patch.note !== undefined) row.note = patch.note;
-  if (patch.day !== undefined) row.day = patch.day;
+  if (patch.date !== undefined) row.date = patch.date;
   if (patch.transport !== undefined) row.transport = patch.transport ?? null;
   if (patch.contentFocus !== undefined) row.content_focus = patch.contentFocus ?? null;
+  if (patch.startTime !== undefined) row.start_time = patch.startTime ?? null;
+  if (patch.endTime !== undefined) row.end_time = patch.endTime ?? null;
 
   const { error } = await supabase.from("itinerary_stops").update(row).eq("id", id);
   if (error) console.error("updateStop failed", error);

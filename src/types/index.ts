@@ -30,26 +30,51 @@ export interface Location {
 
 export type ContentType = "article" | "youtube" | "sns";
 
-export type ContentStatus = "draft" | "scheduled" | "published";
+/**
+ * A single content piece's lifecycle, from idea to published:
+ * candidate (待定) → draft (草稿) → scheduled (製作中) → published (已發布),
+ * with discarded (已捨棄) as a side branch.
+ */
+export type ContentStatus = "candidate" | "draft" | "scheduled" | "published" | "discarded";
 
-/** A piece of coverage content (article / YouTube video / SNS post) tied to a location. */
+/**
+ * A piece of coverage content (article / YouTube video / SNS post) tied to a
+ * location, spanning both pre-production planning and publish tracking —
+ * fields fill in gradually as `status` advances.
+ */
 export interface ContentItem {
   id: string;
+  /** Owning `Project.id`. */
+  projectId: string;
   type: ContentType;
   title: string;
-  url: string;
-  /** ISO 8601 date string (YYYY-MM-DD). */
-  publishDate: string;
   status: ContentStatus;
   /** Related `Location.id` (a prefecture or a city within one). */
   locationId: string;
+  /** ISO 8601 date string (YYYY-MM-DD). Set once scheduled/published. */
+  publishDate?: string;
+  /** ISO 8601 date string (YYYY-MM-DD). When the first draft is due. */
+  draftDueDate?: string;
+  url?: string;
+  summary?: string;
+  /** Article / video section outline, in order. */
+  outline?: string[];
+  keywords?: { primary: string[]; secondary: string[] };
+  /** Candidate titles under consideration alongside `title`. */
+  titleAlternatives?: string[];
+  /** SNS post format, e.g. "reels" or "輪播圖文". */
+  format?: string;
+  /** Other prefectures covered by a cross-prefecture roundup piece. */
+  relatedPrefectureIds?: string[];
 }
 
-/** A single day's stop within an itinerary. */
+/** A single day's stop within a project's itinerary. */
 export interface ItineraryStop {
   id: string;
-  /** Day number within the itinerary, e.g. 1 for "Day 1". */
-  day: number;
+  /** Owning `Project.id`. */
+  projectId: string;
+  /** ISO 8601 date string (YYYY-MM-DD) for this stop's day. */
+  date: string;
   /** Spot / attraction name for this day. */
   spotName: string;
   note: string;
@@ -59,33 +84,17 @@ export interface ItineraryStop {
   transport?: string;
   /** What content this stop is meant to produce, e.g. "五色沼健行、山鹽拉麵". */
   contentFocus?: string;
+  /** HH:mm, when this stop starts. */
+  startTime?: string;
+  /** HH:mm, when this stop ends. */
+  endTime?: string;
 }
 
-export type ContentProposalStatus = "candidate" | "selected" | "discarded";
-
-/** A pre-production content idea (article / YouTube / SNS) not yet committed to a tracked `ContentItem`. */
-export interface ContentProposal {
-  id: string;
-  type: ContentType;
-  /** Related `Prefecture.id` this proposal is anchored to. */
-  prefectureId: string;
-  /** Other prefectures covered by a cross-prefecture roundup proposal. */
-  relatedPrefectureIds?: string[];
-  title: string;
-  summary: string;
-  /** Article / video section outline, in order. */
-  outline?: string[];
-  keywords: { primary: string[]; secondary: string[] };
-  /** Candidate titles under consideration alongside `title`. */
-  titleAlternatives?: string[];
-  /** SNS post format, e.g. "reels" or "輪播圖文". */
-  format?: string;
-  status: ContentProposalStatus;
-}
-
-/** A single budget line item for a trip. */
+/** A single budget line item for a project. */
 export interface BudgetItem {
   id: string;
+  /** Owning `Project.id`. */
+  projectId: string;
   /** Expense category, e.g. "四晚住宿". */
   category: string;
   /** Suggested budget in NT$. */
@@ -93,18 +102,25 @@ export interface BudgetItem {
   note: string;
 }
 
-/** A multi-day itinerary plan made up of ordered stops. */
-export interface Itinerary {
-  id: string;
-  title: string;
-  stops: ItineraryStop[];
-}
-
-/** A single tracked task on a prefecture's progress calendar. */
-export interface CalendarProgress {
+/**
+ * A coverage trip within a prefecture — e.g. one team's outing at one point in
+ * time. A prefecture can have many; each has its own itinerary and budget.
+ */
+export interface Project {
   id: string;
   /** Related `Prefecture.id`. */
   prefectureId: string;
+  name: string;
+  /** Names of the people/team assigned to this trip. */
+  assignees: string[];
+  notes?: string;
+}
+
+/** A single tracked task on a project's progress calendar. */
+export interface CalendarProgress {
+  id: string;
+  /** Owning `Project.id`. */
+  projectId: string;
   /** ISO 8601 date string (YYYY-MM-DD). */
   date: string;
   /** Task description, e.g. "確認會津若松鶴城拍攝許可". */
@@ -121,11 +137,11 @@ export interface CoveragePlanChecklistItem {
   done: boolean;
 }
 
-/** A planned or completed coverage (取材) visit within a prefecture. */
+/** A planned or completed coverage (取材) visit within a project. */
 export interface CoveragePlan {
   id: string;
-  /** Related `Prefecture.id`. */
-  prefectureId: string;
+  /** Owning `Project.id`. */
+  projectId: string;
   /** Coverage spot or theme, e.g. "會津若松鶴城". */
   spot: string;
   /** ISO 8601 date string (YYYY-MM-DD). */

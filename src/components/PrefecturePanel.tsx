@@ -15,7 +15,7 @@ export function PrefecturePanel({ prefecture }: { prefecture: Prefecture }) {
   return (
     <div className="fixed inset-x-0 bottom-0 top-14 z-20 overflow-y-auto bg-cream sm:top-16 lg:static lg:inset-auto lg:top-auto lg:z-auto lg:w-2/3 lg:shrink-0 lg:border-l lg:border-ink/10 lg:bg-white/50">
       <div className="px-5 py-6 sm:px-8 sm:py-8">
-        <PrefectureDetail prefecture={prefecture} onClose={() => router.back()} />
+        <PrefectureDetail prefecture={prefecture} onClose={() => router.push("/")} />
       </div>
     </div>
   );

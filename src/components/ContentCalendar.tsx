@@ -242,7 +242,7 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
               type={hasEvents ? "button" : undefined}
               onClick={hasEvents ? () => setSelectedDate(dateKey) : undefined}
               className={cn(
-                "flex min-h-[64px] flex-col items-center gap-1.5 rounded-xl p-1.5 transition-colors sm:min-h-[80px] sm:p-2 md:min-h-[100px] md:gap-2 md:rounded-2xl md:p-3",
+                "flex min-h-[64px] flex-col items-center justify-center gap-1.5 rounded-xl p-1.5 transition-colors sm:min-h-[80px] sm:p-2 md:min-h-[100px] md:gap-2 md:rounded-2xl md:p-3 lg:min-h-[116px] lg:p-3.5 xl:min-h-[130px] xl:gap-2.5 xl:p-4",
                 isSameMonth(day, month) ? "bg-white/70" : "bg-white/25",
                 isToday(day) && "ring-2 ring-mint",
                 hasEvents && "hover:bg-white active:bg-white/90"
@@ -250,7 +250,7 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
             >
               <span
                 className={cn(
-                  "text-xs font-semibold md:text-sm",
+                  "text-xs font-semibold md:text-sm lg:text-base",
                   isSameMonth(day, month) ? "text-ink/70" : "text-ink/30",
                   isSameDay(day, new Date()) && "text-mint"
                 )}
@@ -259,18 +259,18 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
               </span>
 
               {hasEvents && (
-                <div className="flex flex-wrap items-center justify-center gap-1">
+                <div className="flex flex-wrap items-center justify-center gap-1 lg:gap-1.5">
                   {dotEvents.map((event) =>
                     event.kind === "content" ? (
                       <span
                         key={event.id}
-                        className={cn("h-1.5 w-1.5 rounded-full md:h-2 md:w-2", typeDotColor[event.item.type])}
+                        className={cn("h-1.5 w-1.5 rounded-full md:h-2 md:w-2 lg:h-2.5 lg:w-2.5 xl:h-3 xl:w-3", typeDotColor[event.item.type])}
                       />
                     ) : (
-                      <Camera key={event.id} size={10} className="text-ink/50 md:h-3 md:w-3" />
+                      <Camera key={event.id} size={10} className="text-ink/50 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
                     )
                   )}
-                  {extraCount > 0 && <span className="text-[9px] font-medium text-ink/40 md:text-[10px]">+{extraCount}</span>}
+                  {extraCount > 0 && <span className="text-[9px] font-medium text-ink/40 md:text-[10px] lg:text-xs">+{extraCount}</span>}
                 </div>
               )}
             </Wrapper>

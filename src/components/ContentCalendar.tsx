@@ -264,13 +264,18 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
                     event.kind === "content" ? (
                       <span
                         key={event.id}
-                        className={cn("h-1.5 w-1.5 rounded-full md:h-2 md:w-2 lg:h-2.5 lg:w-2.5 xl:h-3 xl:w-3", typeDotColor[event.item.type])}
+                        className={cn("h-1.5 w-1.5 rounded-full md:h-2 md:w-2 lg:h-3 lg:w-3 xl:h-3.5 xl:w-3.5", typeDotColor[event.item.type])}
                       />
                     ) : (
-                      <Camera key={event.id} size={10} className="text-ink/50 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
+                      <span
+                        key={event.id}
+                        className="flex items-center justify-center rounded-full text-ink/60 lg:bg-ink/10 lg:p-1.5 xl:p-2"
+                      >
+                        <Camera className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-4 lg:w-4 xl:h-5 xl:w-5" />
+                      </span>
                     )
                   )}
-                  {extraCount > 0 && <span className="text-[9px] font-medium text-ink/40 md:text-[10px] lg:text-xs">+{extraCount}</span>}
+                  {extraCount > 0 && <span className="text-[9px] font-medium text-ink/40 md:text-[10px] lg:text-sm">+{extraCount}</span>}
                 </div>
               )}
             </Wrapper>

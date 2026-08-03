@@ -15,7 +15,8 @@ import {
   subMonths,
 } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Camera, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { mockPrefectures } from "@/data/mockData";
 import type { ContentItem, ContentStatus, ContentType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,12 @@ const typeBadgeStyle: Record<ContentType, string> = {
   article: "bg-azure text-ink",
   youtube: "bg-coral text-white",
   sns: "bg-pink text-ink",
+};
+
+const typeDotColor: Record<ContentType, string> = {
+  article: "bg-azure",
+  youtube: "bg-coral",
+  sns: "bg-pink",
 };
 
 const typeLabel: Record<ContentType, string> = {
@@ -43,14 +50,6 @@ const statusLabel: Record<ContentStatus, string> = {
   discarded: "已捨棄",
 };
 
-const statusBadgeModifier: Record<ContentStatus, string> = {
-  candidate: "opacity-60 border border-dashed border-ink/40",
-  draft: "opacity-60 border border-dashed border-ink/40",
-  scheduled: "border border-white/60",
-  published: "border border-white shadow-sm",
-  discarded: "opacity-40 border border-dashed border-ink/20",
-};
-
 // "已捨棄" is intentionally excluded — discarded content isn't useful to filter by here.
 const filterableStatuses: ContentStatus[] = ["candidate", "draft", "scheduled", "published"];
 
@@ -62,6 +61,7 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
   const [month, setMonth] = useState(() => new Date());
   const [prefectureFilter, setPrefectureFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">("all");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { contentItems, coveragePlans, projects } = useContentStore();
 
   const projectPrefectureMap = useMemo(
@@ -229,17 +229,23 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
 
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2 md:gap-3">
         {days.map((day) => {
-          const dayEvents = eventsByDate.get(format(day, "yyyy-MM-dd")) ?? [];
-          const visibleEvents = dayEvents.slice(0, 3);
-          const extraCount = dayEvents.length - visibleEvents.length;
+          const dateKey = format(day, "yyyy-MM-dd");
+          const dayEvents = eventsByDate.get(dateKey) ?? [];
+          const dotEvents = dayEvents.slice(0, 6);
+          const extraCount = dayEvents.length - dotEvents.length;
+          const hasEvents = dayEvents.length > 0;
+          const Wrapper = hasEvents ? "button" : "div";
 
           return (
-            <div
+            <Wrapper
               key={day.toISOString()}
+              type={hasEvents ? "button" : undefined}
+              onClick={hasEvents ? () => setSelectedDate(dateKey) : undefined}
               className={cn(
-                "flex min-h-[92px] flex-col gap-1 rounded-xl p-1.5 sm:min-h-[110px] sm:p-2 md:min-h-[130px] md:gap-1.5 md:rounded-2xl md:p-3 lg:min-h-[150px]",
+                "flex min-h-[64px] flex-col items-center gap-1.5 rounded-xl p-1.5 transition-colors sm:min-h-[80px] sm:p-2 md:min-h-[100px] md:gap-2 md:rounded-2xl md:p-3",
                 isSameMonth(day, month) ? "bg-white/70" : "bg-white/25",
-                isToday(day) && "ring-2 ring-mint"
+                isToday(day) && "ring-2 ring-mint",
+                hasEvents && "hover:bg-white active:bg-white/90"
               )}
             >
               <span
@@ -252,47 +258,125 @@ export function ContentCalendar({ itineraryDates }: { itineraryDates: ItineraryD
                 {format(day, "d")}
               </span>
 
-              <div className="flex flex-col gap-1 md:gap-1.5">
-                {visibleEvents.map((event) =>
-                  event.kind === "content" ? (
-                    <a
-                      key={event.id}
-                      href={event.item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`${typeLabel[event.item.type]} · ${statusLabel[event.item.status]} · ${event.item.title}`}
-                      className={cn(
-                        "truncate rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-tight md:px-2 md:py-1 md:text-xs",
-                        typeBadgeStyle[event.item.type],
-                        statusBadgeModifier[event.item.status]
-                      )}
-                    >
-                      {event.item.title}
-                    </a>
-                  ) : (
-                    <span
-                      key={event.id}
-                      title={`取材安排 · ${event.spot}${event.assignees.length ? " · " + event.assignees.join("、") : ""}`}
-                      className="flex items-center gap-1 truncate rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-ink/70 md:px-2 md:py-1 md:text-xs"
-                    >
-                      <Camera size={10} className="shrink-0" />
-                      <span className="truncate">
-                        {event.spot}
-                        {event.assignees.length > 0 ? `・${event.assignees.join("、")}` : ""}
-                      </span>
-                    </span>
-                  )
-                )}
-                {extraCount > 0 && (
-                  <span className="px-1.5 text-[10px] font-medium text-ink/40 md:text-xs">
-                    +{extraCount} 則
-                  </span>
-                )}
-              </div>
-            </div>
+              {hasEvents && (
+                <div className="flex flex-wrap items-center justify-center gap-1">
+                  {dotEvents.map((event) =>
+                    event.kind === "content" ? (
+                      <span
+                        key={event.id}
+                        className={cn("h-1.5 w-1.5 rounded-full md:h-2 md:w-2", typeDotColor[event.item.type])}
+                      />
+                    ) : (
+                      <Camera key={event.id} size={10} className="text-ink/50 md:h-3 md:w-3" />
+                    )
+                  )}
+                  {extraCount > 0 && <span className="text-[9px] font-medium text-ink/40 md:text-[10px]">+{extraCount}</span>}
+                </div>
+              )}
+            </Wrapper>
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {selectedDate && (
+          <DayEventsSheet
+            dateKey={selectedDate}
+            events={eventsByDate.get(selectedDate) ?? []}
+            onClose={() => setSelectedDate(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function DayEventsSheet({
+  dateKey,
+  events,
+  onClose,
+}: {
+  dateKey: string;
+  events: DayEvent[];
+  onClose: () => void;
+}) {
+  let heading = dateKey;
+  try {
+    heading = format(new Date(`${dateKey}T00:00:00`), "M月d日（EEEEEE）", { locale: zhTW });
+  } catch {
+    // keep raw dateKey as a fallback
+  }
+
+  return (
+    <>
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-ink/30"
+      />
+      <motion.div
+        key="sheet"
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="fixed inset-x-0 bottom-0 z-50 max-h-[75vh] overflow-y-auto rounded-t-3xl bg-cream p-5 shadow-2xl sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:rounded-3xl"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-ink">{heading}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="關閉"
+            className="rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {events.length === 0 ? (
+          <p className="text-sm text-ink/40">這天沒有安排。</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {events.map((event) =>
+              event.kind === "content" ? (
+                <li key={event.id} className={cn("rounded-xl p-3", typeBadgeStyle[event.item.type])}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold">
+                      {typeLabel[event.item.type]} · {statusLabel[event.item.status]}
+                    </span>
+                    {event.item.url && (
+                      <a
+                        href={event.item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="預覽連結"
+                        className="shrink-0 opacity-70 hover:opacity-100"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm font-medium">{event.item.title}</p>
+                </li>
+              ) : (
+                <li key={event.id} className="flex items-start gap-2.5 rounded-xl bg-ink/5 p-3">
+                  <Camera size={16} className="mt-0.5 shrink-0 text-ink/50" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">{event.spot}</p>
+                    {event.assignees.length > 0 && (
+                      <p className="mt-0.5 text-xs text-ink/50">負責人：{event.assignees.join("、")}</p>
+                    )}
+                  </div>
+                </li>
+              )
+            )}
+          </ul>
+        )}
+      </motion.div>
+    </>
   );
 }

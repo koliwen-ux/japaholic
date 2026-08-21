@@ -81,12 +81,28 @@ export const mockPrefectures: Prefecture[] = [
   { id: "pref-okinawa", name: "沖繩縣", color: "#63B896", icon: "Anchor" },
 ];
 
-/** Prefectural capitals, nested under their parent prefecture. Used for fine-grained itinerary planning. */
+/** Cities nested under their parent prefecture. Used for fine-grained itinerary planning. */
 export const mockCities: Location[] = [
   {
     id: "city-aomori",
     type: "city",
     name: "青森市",
+    prefectureName: "青森縣",
+    icon: "Building2",
+    parentId: "pref-aomori",
+  },
+  {
+    id: "city-hirosaki",
+    type: "city",
+    name: "弘前市",
+    prefectureName: "青森縣",
+    icon: "Building2",
+    parentId: "pref-aomori",
+  },
+  {
+    id: "city-hachinohe",
+    type: "city",
+    name: "八戶市",
     prefectureName: "青森縣",
     icon: "Building2",
     parentId: "pref-aomori",

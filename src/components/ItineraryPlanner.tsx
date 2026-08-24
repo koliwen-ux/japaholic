@@ -9,6 +9,7 @@ import { mockLocations } from "@/data/mockData";
 import { useItinerary } from "@/lib/itinerary-store";
 import { useContentStore } from "@/lib/content-store";
 import { iconMap } from "@/lib/icons";
+import { tintHex } from "@/lib/color";
 import { buildTripPptx } from "@/lib/export-pptx";
 import { buildTripIcs } from "@/lib/export-ics";
 import type { ItineraryStop } from "@/types";
@@ -135,6 +136,10 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   const { updateStop, removeStop } = useItinerary();
   const location = mockLocations.find((item) => item.id === stop.locationId);
   const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const hasNote = stop.note.trim().length > 0;
+  const hasTransport = (stop.transport ?? "").trim().length > 0;
+  const hasContentFocus = (stop.contentFocus ?? "").trim().length > 0;
 
   return (
     <Reorder.Item
@@ -155,41 +160,57 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
           />
           <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
-          <div className="flex flex-col gap-1.5 sm:flex-row">
+          <div className="flex flex-row items-center gap-1.5">
             <input
               value={stop.transport ?? ""}
               onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
               placeholder="交通方式..."
-              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="w-16 shrink-0 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:w-20 md:text-sm"
             />
+            {(hasTransport || hasContentFocus) && <span className="shrink-0 text-ink/30">・</span>}
             <input
               value={stop.contentFocus ?? ""}
               onChange={(event) => updateStop(stop.id, { contentFocus: event.target.value })}
               placeholder="內容重點..."
-              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
             />
           </div>
-          <div className="flex flex-col gap-1.5 sm:flex-row">
+          <div className="flex flex-row items-center gap-1.5">
             <input
               type="time"
               value={stop.startTime ?? ""}
               onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
-              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="w-[6.5rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
             />
+            <span className="shrink-0 text-ink/30">–</span>
             <input
               type="time"
               value={stop.endTime ?? ""}
               onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
-              className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="w-[6.5rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
             />
           </div>
-          <textarea
-            value={stop.note}
-            onChange={(event) => updateStop(stop.id, { note: event.target.value })}
-            placeholder="自訂筆記..."
-            rows={1}
-            className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-          />
+          {hasNote || isAddingNote ? (
+            <textarea
+              value={stop.note}
+              onChange={(event) => updateStop(stop.id, { note: event.target.value })}
+              onBlur={() => {
+                if (!stop.note.trim()) setIsAddingNote(false);
+              }}
+              placeholder="自訂筆記..."
+              rows={1}
+              autoFocus={isAddingNote}
+              className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAddingNote(true)}
+              className="w-fit rounded-md px-1 py-0.5 text-xs text-ink/30 transition-colors hover:text-ink/60 print:hidden md:text-sm"
+            >
+              ＋ 新增備注
+            </button>
+          )}
         </div>
       </div>
       <div className="flex shrink-0 flex-row items-center justify-between gap-1.5 sm:flex-col sm:items-end print:hidden">
@@ -223,14 +244,14 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   );
 }
 
-function DateSection({ date }: { date: string }) {
+function DateSection({ date, tint }: { date: string; tint: string }) {
   const { stops, reorderDate } = useItinerary();
   const [isAdding, setIsAdding] = useState(false);
   const dateStops = useMemo(() => stops.filter((stop) => stop.date === date), [stops, date]);
   const dateStopIds = useMemo(() => dateStops.map((stop) => stop.id), [dateStops]);
 
   return (
-    <section className="rounded-2xl bg-white/50 p-4 shadow-sm md:p-5">
+    <section className="rounded-2xl p-4 shadow-sm md:p-5" style={{ backgroundColor: tint }}>
       <div className="mb-3 flex items-center justify-between md:mb-4">
         <h3 className="text-base font-bold text-ink md:text-lg">{formatDateHeading(date)}</h3>
         <button
@@ -310,7 +331,15 @@ function AddDateForm({ onDone }: { onDone: () => void }) {
   );
 }
 
-export function ItineraryPlanner({ title, projectId }: { title: string; projectId: string }) {
+export function ItineraryPlanner({
+  title,
+  projectId,
+  prefectureColor,
+}: {
+  title: string;
+  projectId: string;
+  prefectureColor: string;
+}) {
   const { dates, stops, budgetItems, budgetTotal } = useItinerary();
   const { contentItems: allContentItems } = useContentStore();
   const [isExportingPptx, setIsExportingPptx] = useState(false);
@@ -377,7 +406,13 @@ export function ItineraryPlanner({ title, projectId }: { title: string; projectI
         {dates.length === 0 ? (
           <p className="text-sm text-ink/40 md:text-base">尚無日期，點擊「新增日期」開始安排行程。</p>
         ) : (
-          dates.map((date) => <DateSection key={date} date={date} />)
+          dates.map((date, index) => (
+            <DateSection
+              key={date}
+              date={date}
+              tint={tintHex(prefectureColor, index % 2 === 0 ? 0.86 : 0.68)}
+            />
+          ))
         )}
       </div>
     </div>

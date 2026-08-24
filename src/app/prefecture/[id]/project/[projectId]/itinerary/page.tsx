@@ -26,7 +26,7 @@ export default async function ProjectItineraryPage({
     <div className="flex flex-1 flex-col items-center px-6 py-10 text-ink md:py-14">
       <ProjectSectionShell prefecture={prefecture} project={project} icon={MapPinned} title="行程規劃">
         <ItineraryProvider projectId={project.id} initialStops={stops} initialBudgetItems={budgetItems}>
-          <ItineraryPlanner title={project.name} projectId={project.id} />
+          <ItineraryPlanner title={project.name} projectId={project.id} prefectureColor={prefecture.color} />
         </ItineraryProvider>
       </ProjectSectionShell>
     </div>

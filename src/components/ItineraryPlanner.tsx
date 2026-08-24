@@ -4,7 +4,16 @@ import { useMemo, useState } from "react";
 import { Reorder } from "framer-motion";
 import { addDays, format, parseISO } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { CalendarPlus, GripVertical, Map, MapPin, Plus, Presentation, Trash2 } from "lucide-react";
+import {
+  CalendarPlus,
+  GripVertical,
+  Map,
+  MapPin,
+  Pencil,
+  Plus,
+  Presentation,
+  Trash2,
+} from "lucide-react";
 import { mockLocations } from "@/data/mockData";
 import { useItinerary } from "@/lib/itinerary-store";
 import { useContentStore } from "@/lib/content-store";
@@ -136,6 +145,7 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   const { updateStop, removeStop } = useItinerary();
   const location = mockLocations.find((item) => item.id === stop.locationId);
   const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
+  const [isEditing, setIsEditing] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const hasNote = stop.note.trim().length > 0;
   const hasTransport = (stop.transport ?? "").trim().length > 0;
@@ -144,23 +154,43 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   return (
     <Reorder.Item
       value={stop.id}
-      className="flex flex-col gap-2 rounded-xl bg-white/80 p-3 shadow-sm sm:flex-row sm:items-start sm:gap-3 md:gap-4 md:p-4"
+      className="flex gap-3 rounded-2xl bg-white/85 p-4 shadow-sm md:gap-4 md:p-5"
     >
-      <div className="flex min-w-0 flex-1 items-start gap-3 md:gap-4">
-        <span className="mt-1.5 shrink-0 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
-          <GripVertical size={16} className="md:h-5 md:w-5" />
+      <div className="flex shrink-0 flex-col items-center pt-0.5">
+        <span className="mb-1.5 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
+          <GripVertical size={14} className="md:h-4 md:w-4" />
         </span>
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">
           <Icon size={14} className="md:h-[18px] md:w-[18px]" />
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="mt-2 flex flex-col items-center text-xs font-semibold tabular-nums text-ink md:text-sm">
           <input
-            value={stop.spotName}
-            onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
-            className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
+            type="time"
+            lang="zh-TW"
+            value={stop.startTime ?? ""}
+            onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
+            className="w-24 rounded-md border border-transparent bg-transparent py-0.5 text-center text-inherit hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
           />
-          <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
-          <div className="flex flex-row items-center gap-1.5">
+          <span className="my-0.5 h-3 w-px bg-ink/15" />
+          <input
+            type="time"
+            lang="zh-TW"
+            value={stop.endTime ?? ""}
+            onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
+            className="w-24 rounded-md border border-transparent bg-transparent py-0.5 text-center font-medium text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
+          />
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <input
+          value={stop.spotName}
+          onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
+          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-bold leading-snug text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
+        />
+        <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
+
+        {isEditing && (
+          <div className="mt-2 flex flex-row items-center gap-1.5 rounded-lg bg-ink/[0.03] p-1.5">
             <input
               value={stop.transport ?? ""}
               onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
@@ -172,25 +202,22 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
               value={stop.contentFocus ?? ""}
               onChange={(event) => updateStop(stop.id, { contentFocus: event.target.value })}
               placeholder="內容重點..."
-              className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
             />
           </div>
-          <div className="flex flex-row items-center gap-1.5">
-            <input
-              type="time"
-              value={stop.startTime ?? ""}
-              onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
-              className="w-[6.5rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-            />
-            <span className="shrink-0 text-ink/30">–</span>
-            <input
-              type="time"
-              value={stop.endTime ?? ""}
-              onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
-              className="w-[6.5rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-            />
-          </div>
-          {hasNote || isAddingNote ? (
+        )}
+
+        {isEditing && (
+          <input
+            type="date"
+            value={stop.date}
+            onChange={(event) => updateStop(stop.id, { date: event.target.value })}
+            className="mt-2 w-fit rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
+          />
+        )}
+
+        {hasNote || isAddingNote ? (
+          <div className="mt-2 border-t border-dashed border-ink/15 pt-2">
             <textarea
               value={stop.note}
               onChange={(event) => updateStop(stop.id, { note: event.target.value })}
@@ -200,27 +227,31 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
               placeholder="自訂筆記..."
               rows={1}
               autoFocus={isAddingNote}
-              className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
             />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsAddingNote(true)}
-              className="w-fit rounded-md px-1 py-0.5 text-xs text-ink/30 transition-colors hover:text-ink/60 print:hidden md:text-sm"
-            >
-              ＋ 新增備注
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-row items-center justify-between gap-1.5 sm:flex-col sm:items-end print:hidden">
-        <input
-          type="date"
-          value={stop.date}
-          onChange={(event) => updateStop(stop.id, { date: event.target.value })}
-          className="rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
-        />
-        <div className="flex items-center gap-0.5">
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingNote(true)}
+            className="mt-2 w-fit rounded-md px-1 py-0.5 text-xs text-ink/30 transition-colors hover:text-ink/60 print:hidden md:text-sm"
+          >
+            ＋ 新增備注
+          </button>
+        )}
+
+        <div className="mt-2 flex items-center justify-end gap-0.5 print:hidden">
+          <button
+            type="button"
+            onClick={() => setIsEditing((v) => !v)}
+            aria-label={isEditing ? "收合編輯" : "編輯更多欄位"}
+            aria-pressed={isEditing}
+            className={`rounded-full p-1.5 transition-colors hover:bg-ink/10 hover:text-ink ${
+              isEditing ? "text-ink" : "text-ink/40"
+            }`}
+          >
+            <Pencil size={14} className="md:h-4 md:w-4" />
+          </button>
           <a
             href={googleMapsSearchUrl(stop.spotName)}
             target="_blank"
@@ -244,7 +275,15 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   );
 }
 
-function DateSection({ date, tint }: { date: string; tint: string }) {
+function DateSection({
+  date,
+  tint,
+  accentColor,
+}: {
+  date: string;
+  tint: string;
+  accentColor: string;
+}) {
   const { stops, reorderDate } = useItinerary();
   const [isAdding, setIsAdding] = useState(false);
   const dateStops = useMemo(() => stops.filter((stop) => stop.date === date), [stops, date]);
@@ -253,7 +292,13 @@ function DateSection({ date, tint }: { date: string; tint: string }) {
   return (
     <section className="rounded-2xl p-4 shadow-sm md:p-5" style={{ backgroundColor: tint }}>
       <div className="mb-3 flex items-center justify-between md:mb-4">
-        <h3 className="text-base font-bold text-ink md:text-lg">{formatDateHeading(date)}</h3>
+        <h3 className="flex items-center gap-2 text-base font-bold text-ink md:text-lg">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: accentColor }}
+          />
+          {formatDateHeading(date)}
+        </h3>
         <button
           type="button"
           onClick={() => setIsAdding((v) => !v)}
@@ -410,7 +455,8 @@ export function ItineraryPlanner({
             <DateSection
               key={date}
               date={date}
-              tint={tintHex(prefectureColor, index % 2 === 0 ? 0.86 : 0.68)}
+              accentColor={prefectureColor}
+              tint={tintHex(prefectureColor, index % 2 === 0 ? 92 : 80)}
             />
           ))
         )}

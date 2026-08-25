@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -5,11 +8,14 @@ import {
   ClipboardList,
   Compass,
   MapPinned,
+  Pencil,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { Prefecture, Project } from "@/types";
 import { iconMap } from "@/lib/icons";
+import { useContentStore } from "@/lib/content-store";
+import { ProjectForm, splitCommas, toFormValue } from "@/components/ProjectForm";
 
 const sections: { slug: string; icon: LucideIcon; title: string; description: string }[] = [
   { slug: "itinerary", icon: MapPinned, title: "行程規劃", description: "每日行程、交通與時間安排" },
@@ -19,9 +25,18 @@ const sections: { slug: string; icon: LucideIcon; title: string; description: st
   { slug: "coverage", icon: Compass, title: "取材安排", description: "景點、時間、地址與拍攝檢查清單" },
 ];
 
-export function ProjectDetail({ prefecture, project }: { prefecture: Prefecture; project: Project }) {
+export function ProjectDetail({
+  prefecture,
+  project: initialProject,
+}: {
+  prefecture: Prefecture;
+  project: Project;
+}) {
   const Icon = iconMap[prefecture.icon] ?? Compass;
-  const basePath = `/prefecture/${prefecture.id.replace("pref-", "")}/project/${project.id}`;
+  const basePath = `/prefecture/${prefecture.id.replace("pref-", "")}/project/${initialProject.id}`;
+  const { projects, updateProject } = useContentStore();
+  const project = projects.find((item) => item.id === initialProject.id) ?? initialProject;
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div className="w-full max-w-3xl md:max-w-4xl">
@@ -32,25 +47,51 @@ export function ProjectDetail({ prefecture, project }: { prefecture: Prefecture;
         <ArrowLeft size={14} className="md:h-4 md:w-4" /> 返回{prefecture.name}
       </Link>
 
-      <div
-        className="mt-5 flex items-center gap-4 rounded-3xl p-5 md:mt-6 md:p-6"
-        style={{ backgroundColor: `${prefecture.color}26` }}
-      >
-        <span
-          className="flex h-16 w-16 items-center justify-center rounded-3xl text-ink shadow-sm md:h-20 md:w-20"
-          style={{ backgroundColor: prefecture.color }}
-        >
-          <Icon size={32} strokeWidth={2} className="md:h-9 md:w-9" />
-        </span>
-        <div>
-          <h1 className="text-2xl font-black text-ink md:text-3xl">{project.name}</h1>
-          <p className="text-sm text-ink/50 md:text-base">
-            {prefecture.name}
-            {project.assignees.length > 0 ? `・執行者：${project.assignees.join("、")}` : ""}
-          </p>
-          {project.notes && <p className="mt-2 text-sm text-ink/70 md:text-base">{project.notes}</p>}
+      {isEditing ? (
+        <div className="mt-5 overflow-hidden rounded-3xl bg-white/70 shadow-sm md:mt-6">
+          <ProjectForm
+            initial={toFormValue(project)}
+            submitLabel="儲存"
+            onCancel={() => setIsEditing(false)}
+            onSubmit={(value) => {
+              updateProject(project.id, {
+                name: value.name.trim(),
+                assignees: splitCommas(value.assignees),
+                notes: value.notes.trim() || undefined,
+              });
+              setIsEditing(false);
+            }}
+          />
         </div>
-      </div>
+      ) : (
+        <div
+          className="mt-5 flex items-start gap-4 rounded-3xl p-5 md:mt-6 md:p-6"
+          style={{ backgroundColor: `${prefecture.color}26` }}
+        >
+          <span
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl text-ink shadow-sm md:h-20 md:w-20"
+            style={{ backgroundColor: prefecture.color }}
+          >
+            <Icon size={32} strokeWidth={2} className="md:h-9 md:w-9" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-black text-ink md:text-3xl">{project.name}</h1>
+            <p className="text-sm text-ink/50 md:text-base">
+              {prefecture.name}
+              {project.assignees.length > 0 ? `・執行者：${project.assignees.join("、")}` : ""}
+            </p>
+            {project.notes && <p className="mt-2 text-sm text-ink/70 md:text-base">{project.notes}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            aria-label="編輯專案"
+            className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink"
+          >
+            <Pencil size={14} className="md:h-4 md:w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mt-10 md:gap-4">
         {sections.map((section) => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Reorder } from "framer-motion";
+import { Reorder, useDragControls } from "framer-motion";
 import { addDays, format, parseISO } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import {
@@ -195,17 +195,24 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   const hasTransport = (stop.transport ?? "").trim().length > 0;
   const hasContentFocus = (stop.contentFocus ?? "").trim().length > 0;
 
+  const dragControls = useDragControls();
   const stopClickBubble = (event: React.MouseEvent) => event.stopPropagation();
   const readOnlyTextClass = isExpanded ? "" : "truncate";
 
   return (
     <Reorder.Item
       value={stop.id}
+      dragListener={false}
+      dragControls={dragControls}
       onClick={() => setIsExpanded((v) => !v)}
       className="flex cursor-pointer gap-3 rounded-2xl bg-white/85 p-4 shadow-sm md:gap-4 md:p-5"
     >
       <div className="flex shrink-0 flex-col items-center pt-0.5" onClick={stopClickBubble}>
-        <span className="mb-1.5 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
+        <span
+          onPointerDown={(event) => dragControls.start(event)}
+          aria-label="拖曳排序"
+          className="mb-1.5 touch-none cursor-grab text-ink/30 active:cursor-grabbing print:hidden"
+        >
           <GripVertical size={14} className="md:h-4 md:w-4" />
         </span>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/30 text-ink md:h-10 md:w-10">

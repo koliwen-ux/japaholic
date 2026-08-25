@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   Presentation,
+  ScrollText,
   Trash2,
 } from "lucide-react";
 import { mockLocations } from "@/data/mockData";
@@ -147,16 +148,30 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isScriptOpen, setIsScriptOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const hasNote = stop.note.trim().length > 0;
+  const hasScript = (stop.script ?? "").trim().length > 0;
   const hasTransport = (stop.transport ?? "").trim().length > 0;
   const hasContentFocus = (stop.contentFocus ?? "").trim().length > 0;
+
+  const expandOnly = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsExpanded(true);
+  };
+  const stopClickBubble = (event: React.MouseEvent) => event.stopPropagation();
+
+  const textFieldClass = isExpanded
+    ? "resize-y"
+    : "truncate resize-none overflow-hidden whitespace-nowrap";
 
   return (
     <Reorder.Item
       value={stop.id}
-      className="flex gap-3 rounded-2xl bg-white/85 p-4 shadow-sm md:gap-4 md:p-5"
+      onClick={() => setIsExpanded((v) => !v)}
+      className="flex cursor-pointer gap-3 rounded-2xl bg-white/85 p-4 shadow-sm md:gap-4 md:p-5"
     >
-      <div className="flex shrink-0 flex-col items-center pt-0.5">
+      <div className="flex shrink-0 flex-col items-center pt-0.5" onClick={stopClickBubble}>
         <span className="mb-1.5 cursor-grab text-ink/30 active:cursor-grabbing print:hidden">
           <GripVertical size={14} className="md:h-4 md:w-4" />
         </span>
@@ -169,7 +184,7 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             lang="zh-TW"
             value={stop.startTime ?? ""}
             onChange={(event) => updateStop(stop.id, { startTime: event.target.value })}
-            className="w-24 rounded-md border border-transparent bg-transparent py-0.5 text-center text-inherit hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
+            className="w-16 rounded-md border border-transparent bg-transparent py-0.5 text-center text-inherit hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
           />
           <span className="my-0.5 h-3 w-px bg-ink/15" />
           <input
@@ -177,20 +192,25 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             lang="zh-TW"
             value={stop.endTime ?? ""}
             onChange={(event) => updateStop(stop.id, { endTime: event.target.value })}
-            className="w-24 rounded-md border border-transparent bg-transparent py-0.5 text-center font-medium text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
+            className="w-16 rounded-md border border-transparent bg-transparent py-0.5 text-center font-medium text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none"
           />
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <input
+        <textarea
           value={stop.spotName}
           onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
-          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-bold leading-snug text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
+          onClick={expandOnly}
+          rows={isExpanded ? 3 : 1}
+          className={`w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-bold leading-snug text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base ${textFieldClass}`}
         />
         <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
 
         {isEditing && (
-          <div className="mt-2 flex flex-row items-center gap-1.5 rounded-lg bg-ink/[0.03] p-1.5">
+          <div
+            className="mt-2 flex flex-row items-center gap-1.5 rounded-lg bg-ink/[0.03] p-1.5"
+            onClick={stopClickBubble}
+          >
             <input
               value={stop.transport ?? ""}
               onChange={(event) => updateStop(stop.id, { transport: event.target.value })}
@@ -212,6 +232,7 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             type="date"
             value={stop.date}
             onChange={(event) => updateStop(stop.id, { date: event.target.value })}
+            onClick={stopClickBubble}
             className="mt-2 w-fit rounded-md border border-ink/10 bg-white px-1.5 py-1 text-xs text-ink md:px-2 md:py-1.5 md:text-sm"
           />
         )}
@@ -221,26 +242,42 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             <textarea
               value={stop.note}
               onChange={(event) => updateStop(stop.id, { note: event.target.value })}
+              onClick={expandOnly}
               onBlur={() => {
                 if (!stop.note.trim()) setIsAddingNote(false);
               }}
               placeholder="自訂筆記..."
-              rows={1}
+              rows={isExpanded ? 3 : 1}
               autoFocus={isAddingNote}
-              className="w-full resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+              className={`w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm ${textFieldClass}`}
             />
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => setIsAddingNote(true)}
+            onClick={(event) => {
+              stopClickBubble(event);
+              setIsAddingNote(true);
+            }}
             className="mt-2 w-fit rounded-md px-1 py-0.5 text-xs text-ink/30 transition-colors hover:text-ink/60 print:hidden md:text-sm"
           >
             ＋ 新增備注
           </button>
         )}
 
-        <div className="mt-2 flex items-center justify-end gap-0.5 print:hidden">
+        {isScriptOpen && (
+          <div className="mt-2 rounded-lg bg-ink/[0.03] p-2" onClick={stopClickBubble}>
+            <textarea
+              value={stop.script ?? ""}
+              onChange={(event) => updateStop(stop.id, { script: event.target.value })}
+              placeholder="講稿..."
+              rows={4}
+              className="w-full resize-y rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+            />
+          </div>
+        )}
+
+        <div className="mt-2 flex items-center justify-end gap-0.5 print:hidden" onClick={stopClickBubble}>
           <button
             type="button"
             onClick={() => setIsEditing((v) => !v)}
@@ -251,6 +288,17 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
             }`}
           >
             <Pencil size={14} className="md:h-4 md:w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsScriptOpen((v) => !v)}
+            aria-label={isScriptOpen ? "收合講稿" : "展開講稿"}
+            aria-pressed={isScriptOpen}
+            className={`rounded-full p-1.5 transition-colors hover:bg-ink/10 hover:text-ink ${
+              isScriptOpen || hasScript ? "text-ink" : "text-ink/40"
+            }`}
+          >
+            <ScrollText size={14} className="md:h-4 md:w-4" />
           </button>
           <a
             href={googleMapsSearchUrl(stop.spotName)}

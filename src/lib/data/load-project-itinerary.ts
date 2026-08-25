@@ -51,6 +51,7 @@ export async function loadProjectItinerary(projectId: string): Promise<ProjectIt
     contentFocus: row.content_focus ?? undefined,
     startTime: row.start_time ?? undefined,
     endTime: row.end_time ?? undefined,
+    script: row.script ?? undefined,
   }));
 
   const budgetItems: BudgetItem[] = (budgetRes.data ?? []).map((row) => ({

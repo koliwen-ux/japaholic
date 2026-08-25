@@ -90,6 +90,8 @@ export interface ItineraryStop {
   startTime?: string;
   /** HH:mm, when this stop ends. */
   endTime?: string;
+  /** On-camera narration script for this stop, typed by hand (no AI generation). */
+  script?: string;
 }
 
 /** A single budget line item for a project. */

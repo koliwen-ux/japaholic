@@ -17,6 +17,7 @@ export async function createStop(stop: ItineraryStop, position: number) {
     content_focus: stop.contentFocus ?? null,
     start_time: stop.startTime ?? null,
     end_time: stop.endTime ?? null,
+    script: stop.script ?? "",
   });
   if (error) console.error("createStop failed", error);
 }
@@ -24,7 +25,10 @@ export async function createStop(stop: ItineraryStop, position: number) {
 export async function updateStop(
   id: string,
   patch: Partial<
-    Pick<ItineraryStop, "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime">
+    Pick<
+      ItineraryStop,
+      "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime" | "script"
+    >
   >
 ) {
   const supabase = getSupabaseServerClient();
@@ -36,6 +40,7 @@ export async function updateStop(
   if (patch.contentFocus !== undefined) row.content_focus = patch.contentFocus ?? null;
   if (patch.startTime !== undefined) row.start_time = patch.startTime ?? null;
   if (patch.endTime !== undefined) row.end_time = patch.endTime ?? null;
+  if (patch.script !== undefined) row.script = patch.script ?? "";
 
   const { error } = await supabase.from("itinerary_stops").update(row).eq("id", id);
   if (error) console.error("updateStop failed", error);

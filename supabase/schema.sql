@@ -68,6 +68,7 @@ create table itinerary_stops (
   content_focus text,
   start_time text,
   end_time text,
+  script text not null default '',
   created_at timestamptz not null default now()
 );
 

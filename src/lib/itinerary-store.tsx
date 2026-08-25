@@ -41,7 +41,10 @@ interface AddBudgetItemInput {
 }
 
 type StopPatch = Partial<
-  Pick<ItineraryStop, "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime">
+  Pick<
+    ItineraryStop,
+    "spotName" | "note" | "date" | "transport" | "contentFocus" | "startTime" | "endTime" | "script"
+  >
 >;
 type BudgetItemPatch = Partial<Pick<BudgetItem, "category" | "amount" | "note">>;
 

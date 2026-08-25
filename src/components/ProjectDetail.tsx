@@ -12,11 +12,11 @@ import type { Prefecture, Project } from "@/types";
 import { iconMap } from "@/lib/icons";
 
 const sections: { slug: string; icon: LucideIcon; title: string; description: string }[] = [
+  { slug: "itinerary", icon: MapPinned, title: "行程規劃", description: "每日行程、交通與時間安排" },
   { slug: "content", icon: ClipboardList, title: "內容規劃", description: "文章、YouTube、SNS 企劃與發布排程" },
   { slug: "calendar", icon: CalendarCheck2, title: "進度月曆", description: "追蹤任務與發布／取材日期總覽" },
-  { slug: "coverage", icon: Compass, title: "取材安排", description: "景點、時間、地址與拍攝檢查清單" },
-  { slug: "itinerary", icon: MapPinned, title: "行程規劃", description: "每日行程、交通與時間安排" },
   { slug: "budget", icon: Wallet, title: "預算規劃", description: "費用項目與總預算試算" },
+  { slug: "coverage", icon: Compass, title: "取材安排", description: "景點、時間、地址與拍攝檢查清單" },
 ];
 
 export function ProjectDetail({ prefecture, project }: { prefecture: Prefecture; project: Project }) {

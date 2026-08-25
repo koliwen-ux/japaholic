@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
 import { addDays, format, parseISO } from "date-fns";
 import { zhTW } from "date-fns/locale";
@@ -14,6 +15,7 @@ import {
   Presentation,
   ScrollText,
   Trash2,
+  X,
 } from "lucide-react";
 import { mockLocations } from "@/data/mockData";
 import { useItinerary } from "@/lib/itinerary-store";
@@ -142,12 +144,50 @@ function AddStopForm({ date, onDone }: { date: string; onDone: () => void }) {
   );
 }
 
+function ScriptModal({ stop, onClose }: { stop: ItineraryStop; onClose: () => void }) {
+  const { updateStop } = useItinerary();
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-cream"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-ink/10 p-4">
+        <p className="min-w-0 truncate text-sm font-bold text-ink md:text-base">{stop.spotName} · 講稿</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="關閉講稿"
+          className="shrink-0 rounded-full p-1.5 text-ink/50 transition-colors hover:bg-ink/10 hover:text-ink"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      <textarea
+        value={stop.script ?? ""}
+        onChange={(event) => updateStop(stop.id, { script: event.target.value })}
+        placeholder="講稿..."
+        autoFocus
+        className="flex-1 resize-none border-none bg-transparent p-4 text-base leading-relaxed text-ink focus:outline-none"
+      />
+    </div>,
+    document.body
+  );
+}
+
 function StopCard({ stop }: { stop: ItineraryStop }) {
   const { updateStop, removeStop } = useItinerary();
   const location = mockLocations.find((item) => item.id === stop.locationId);
   const Icon = location ? iconMap[location.icon] ?? MapPin : MapPin;
   const [isEditing, setIsEditing] = useState(false);
-  const [isAddingNote, setIsAddingNote] = useState(false);
   const [isScriptOpen, setIsScriptOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const hasNote = stop.note.trim().length > 0;
@@ -155,15 +195,8 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
   const hasTransport = (stop.transport ?? "").trim().length > 0;
   const hasContentFocus = (stop.contentFocus ?? "").trim().length > 0;
 
-  const expandOnly = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setIsExpanded(true);
-  };
   const stopClickBubble = (event: React.MouseEvent) => event.stopPropagation();
-
-  const textFieldClass = isExpanded
-    ? "resize-y"
-    : "truncate resize-none overflow-hidden whitespace-nowrap";
+  const readOnlyTextClass = isExpanded ? "" : "truncate";
 
   return (
     <Reorder.Item
@@ -197,13 +230,18 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <textarea
-          value={stop.spotName}
-          onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
-          onClick={expandOnly}
-          rows={isExpanded ? 3 : 1}
-          className={`w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-bold leading-snug text-ink hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-base ${textFieldClass}`}
-        />
+        {isEditing ? (
+          <input
+            value={stop.spotName}
+            onChange={(event) => updateStop(stop.id, { spotName: event.target.value })}
+            onClick={stopClickBubble}
+            className="w-full rounded-md border border-ink/10 bg-ink/[0.03] px-1 py-0.5 text-sm font-bold leading-snug text-ink focus:border-ink/20 focus:bg-white focus:outline-none md:text-base"
+          />
+        ) : (
+          <p className={`px-1 text-sm font-bold leading-snug text-ink md:text-base ${readOnlyTextClass}`}>
+            {stop.spotName}
+          </p>
+        )}
         <p className="px-1 text-xs text-ink/50 md:text-sm">{location?.prefectureName ?? ""}</p>
 
         {isEditing && (
@@ -237,45 +275,26 @@ function StopCard({ stop }: { stop: ItineraryStop }) {
           />
         )}
 
-        {hasNote || isAddingNote ? (
-          <div className="mt-2 border-t border-dashed border-ink/15 pt-2">
-            <textarea
-              value={stop.note}
-              onChange={(event) => updateStop(stop.id, { note: event.target.value })}
-              onClick={expandOnly}
-              onBlur={() => {
-                if (!stop.note.trim()) setIsAddingNote(false);
-              }}
-              placeholder="自訂筆記..."
-              rows={isExpanded ? 3 : 1}
-              autoFocus={isAddingNote}
-              className={`w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/60 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm ${textFieldClass}`}
-            />
-          </div>
+        {isEditing ? (
+          <textarea
+            value={stop.note}
+            onChange={(event) => updateStop(stop.id, { note: event.target.value })}
+            onClick={stopClickBubble}
+            placeholder="自訂筆記..."
+            rows={3}
+            className="mt-2 w-full resize-y rounded-md border border-ink/10 bg-ink/[0.03] px-1 py-1 text-xs leading-relaxed text-ink/70 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
+          />
         ) : (
-          <button
-            type="button"
-            onClick={(event) => {
-              stopClickBubble(event);
-              setIsAddingNote(true);
-            }}
-            className="mt-2 w-fit rounded-md px-1 py-0.5 text-xs text-ink/30 transition-colors hover:text-ink/60 print:hidden md:text-sm"
-          >
-            ＋ 新增備注
-          </button>
+          hasNote && (
+            <p
+              className={`mt-2 border-t border-dashed border-ink/15 pt-2 text-xs leading-relaxed text-ink/60 md:text-sm ${readOnlyTextClass}`}
+            >
+              {stop.note}
+            </p>
+          )
         )}
 
-        {isScriptOpen && (
-          <div className="mt-2 rounded-lg bg-ink/[0.03] p-2" onClick={stopClickBubble}>
-            <textarea
-              value={stop.script ?? ""}
-              onChange={(event) => updateStop(stop.id, { script: event.target.value })}
-              placeholder="講稿..."
-              rows={4}
-              className="w-full resize-y rounded-md border border-transparent bg-transparent px-1 py-0.5 text-xs leading-relaxed text-ink/70 hover:border-ink/10 focus:border-ink/20 focus:bg-white focus:outline-none md:text-sm"
-            />
-          </div>
-        )}
+        {isScriptOpen && <ScriptModal stop={stop} onClose={() => setIsScriptOpen(false)} />}
 
         <div className="mt-2 flex items-center justify-end gap-0.5 print:hidden" onClick={stopClickBubble}>
           <button
